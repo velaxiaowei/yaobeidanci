@@ -1,0 +1,111 @@
+{# 四选一轮：单词+音标，4个中文释义选1个，选完标色+显示完整释义 #}
+{% extends "base.html" %}
+
+{% block title %}复习 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="review-mc">
+    <div class="judge-progress">{{ current_idx }}/{{ total }}</div>
+
+    <div class="mc-card">
+        <div class="pronounceable" data-word="{{ item.word }}" data-autoplay="1">
+            <h1 class="mc-word">{{ item.word }}</h1>
+            {% if phonetic %}
+                <p class="mc-phonetic">（英）/{{ phonetic }}/</p>
+            {% endif %}
+        </div>
+        <p class="mc-hint">先回想词义再选择，<a href="javascript:void(0)" id="show-answer-btn" class="mc-show-answer">看答案</a></p>
+
+        <div class="mc-options" id="mc-options">
+            {% for opt in options %}
+                <button type="button" class="mc-option" data-meaning="{{ opt }}">
+                    {{ opt }}
+                </button>
+            {% endfor %}
+        </div>
+
+        {# 答完后显示的完整释义区（初始隐藏）#}
+        <div class="mc-reveal" id="mc-reveal" style="display:none;">
+            <div class="reveal-meanings">
+                {% for m in parsed_meanings %}
+                    <div class="reveal-meaning-line">
+                        {% if m.pos %}<span class="reveal-pos">{{ m.pos }}</span>{% endif %}
+                        {% for meaning in m.meanings %}
+                            {{ meaning }}{% if not loop.last %}，{% endif %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% if examples %}
+                <div class="reveal-examples">
+                    {% for ex in examples %}
+                        <p class="reveal-example">{{ ex }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        {# 下一题按钮（答完或看答案后显示）#}
+        <form method="POST" action="{{ url_for('review.multichoice') }}" id="next-form" style="display:none;">
+            <input type="hidden" name="review_id" value="{{ item.review_id }}">
+            <input type="hidden" name="meaning" value="{{ correct_meaning }}">
+            <input type="hidden" name="correct_meaning" value="{{ correct_meaning }}">
+            <button type="submit" class="btn btn-primary mc-next-btn">下一题 →</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // 正确答案
+    var CORRECT = {{ correct_meaning | tojson }};
+    var answered = false;
+
+    // 给所有选项绑定点击事件
+    document.querySelectorAll('.mc-option').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (answered) return;
+            answered = true;
+
+            var selected = btn.getAttribute('data-meaning');
+            var isCorrect = (selected === CORRECT);
+
+            // 标色：选对→绿；选错→红，同时把正确的标绿
+            document.querySelectorAll('.mc-option').forEach(function(b) {
+                b.disabled = true;
+                var m = b.getAttribute('data-meaning');
+                if (m === CORRECT) {
+                    b.classList.add('mc-correct');
+                } else if (b === btn && !isCorrect) {
+                    b.classList.add('mc-wrong');
+                }
+            });
+
+            if (isCorrect) {
+                // 答对了：短暂展示绿色高亮后自动跳下一题，不用手动点
+                // 600ms 足够用户看到自己选对了
+                setTimeout(function() {
+                    document.getElementById('next-form').submit();
+                }, 600);
+            } else {
+                // 答错了：显示完整释义 + 下一题按钮，让用户手动看释义再继续
+                document.getElementById('mc-reveal').style.display = 'block';
+                document.getElementById('next-form').style.display = 'block';
+            }
+        });
+    });
+
+    // "看答案"按钮：直接显示释义（不判对错）
+    document.getElementById('show-answer-btn').addEventListener('click', function() {
+        answered = true;
+        // 把正确答案标绿
+        document.querySelectorAll('.mc-option').forEach(function(b) {
+            b.disabled = true;
+            if (b.getAttribute('data-meaning') === CORRECT) {
+                b.classList.add('mc-correct');
+            }
+        });
+        document.getElementById('mc-reveal').style.display = 'block';
+        document.getElementById('next-form').style.display = 'block';
+    });
+</script>
+{% endblock %}

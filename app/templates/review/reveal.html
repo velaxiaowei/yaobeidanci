@@ -1,0 +1,50 @@
+{# onset 页：选完评分后显示完整释义，底部「下一词」「记错了」#}
+{% extends "base.html" %}
+
+{% block title %}复习 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="review-reveal">
+    <div class="judge-progress">{{ current_idx }}/{{ total }}</div>
+
+    <div class="reveal-card">
+        <div class="pronounceable" data-word="{{ item.word }}" data-autoplay="1">
+            <h1 class="reveal-word">{{ item.word }}</h1>
+            {% if phonetic %}
+                <p class="reveal-phonetic">（英）/{{ phonetic }}/</p>
+            {% endif %}
+        </div>
+
+        {# 中文释义（按词性分行，不默认加粗，后续有高频标记再加）#}
+        <div class="reveal-meanings">
+            {% for m in parsed_meanings %}
+                <div class="reveal-meaning-line">
+                    {% if m.pos %}<span class="reveal-pos">{{ m.pos }}</span>{% endif %}
+                    {% for meaning in m.meanings %}
+                        {{ meaning }}{% if not loop.last %}，{% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {# 例句 #}
+        {% if examples %}
+            <div class="reveal-examples">
+                {% for ex in examples %}
+                    <p class="reveal-example">{{ ex }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {# 底部按钮：下一词 / 记错了 #}
+    <div class="reveal-buttons">
+        <form method="POST" action="{{ url_for('review.reveal_next', review_id=item.review_id) }}" class="reveal-form">
+            <button type="submit" class="reveal-btn next">下一词</button>
+        </form>
+        <form method="POST" action="{{ url_for('review.reveal_wrong', review_id=item.review_id) }}" class="reveal-form">
+            <button type="submit" class="reveal-btn wrong">记错了</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

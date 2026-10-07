@@ -1,0 +1,15 @@
+{# 复习完成页：所有待复习的词都复习完了 #}
+{% extends "base.html" %}
+
+{% block title %}复习完成 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="review-done">
+    <h1>🎉 今日复习完成！</h1>
+    <p>你已经复习完了今天所有待复习的单词。</p>
+    <div class="done-actions">
+        <a href="{{ url_for('review.index') }}" class="btn btn-primary">返回复习主页</a>
+        <a href="{{ url_for('words.search') }}" class="btn btn-outline">去查词加新词</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{# 回想轮：完整释义页。点完认识/模糊/不认识后展示，不自动下一词。 #}
+{% extends "base.html" %}
+
+{% block title %}复习 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="review-recall">
+    {# 顶部：返回上一词 + 进度 #}
+    <div class="recall-top-bar">
+        <form method="POST" action="{{ url_for('review.recall_reveal_back') }}" class="back-form">
+            <button type="submit" class="back-btn" {% if not has_prev %}disabled{% endif %}>
+                ← 返回上一词
+            </button>
+        </form>
+        <span class="judge-progress">{{ current_idx }}/{{ total }}</span>
+    </div>
+
+    <div class="recall-card">
+        {# 英文单词 + 音标（点击可发音）#}
+        <div class="recall-word-area pronounceable" data-word="{{ item.word }}" data-autoplay="1">
+            <h1 class="recall-word">{{ item.word }}</h1>
+            {% if phonetic %}
+                <p class="recall-phonetic">（英）/{{ phonetic }}/</p>
+            {% endif %}
+        </div>
+
+        {# 中文释义 #}
+        <div class="recall-meanings">
+            {% for m in parsed_meanings %}
+                <div class="recall-meaning-line">
+                    {% if m.pos %}<span class="reveal-pos">{{ m.pos }}</span>{% endif %}
+                    {% for meaning in m.meanings %}
+                        {{ meaning }}{% if not loop.last %}，{% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {# 柯林斯英文释义（如果有）#}
+        {% if collins_def %}
+            <div class="recall-collins">
+                <p class="recall-collins-text">{{ collins_def }}</p>
+            </div>
+        {% endif %}
+
+        {# 例句 #}
+        {% if examples %}
+            <div class="recall-examples">
+                {% for ex in examples %}
+                    <p class="reveal-example">{{ ex }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    {# 底部：下一词 #}
+    <div class="judge-buttons">
+        <form method="POST" action="{{ url_for('review.recall_reveal_next') }}">
+            <div class="judge-btn-row">
+                {% if has_next %}
+                    <button type="submit" class="judge-btn know" style="width:100%;">下一词 →</button>
+                {% else %}
+                    <button type="submit" class="judge-btn know" style="width:100%;">完成复习 🎉</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

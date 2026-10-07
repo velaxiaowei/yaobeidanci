@@ -1,0 +1,97 @@
+{# 设置页：学习偏好 #}
+{% extends "base.html" %}
+
+{% block title %}设置 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <h1>⚙️ 学习偏好</h1>
+
+    <form method="POST" class="settings-form">
+        {# 每次复习数量 #}
+        <div class="form-group">
+            <label>每次复习单词数</label>
+            <p class="form-hint">复习达到这个数量后，会提示是否进入拼写巩固</p>
+            <div class="count-options">
+                {% for n in [15, 20, 25, 30, 35, 40] %}
+                    <label class="count-option">
+                        <input type="radio" name="daily_count" value="{{ n }}"
+                            {% if settings.daily_count == n %}checked{% endif %}>
+                        <span>{{ n }} 个</span>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# 拼写巩固开关 #}
+        <div class="form-group">
+            <label class="switch-label">
+                <input type="checkbox" name="spelling_enabled" value="1"
+                    {% if settings.spelling_enabled %}checked{% endif %}>
+                <span>复习后进入拼写巩固</span>
+            </label>
+            <p class="form-hint">开启后，每次复习达到设定数量时，会进入拼写测试（看中文写英文）</p>
+        </div>
+
+        {# 默认发音 #}
+        <div class="form-group">
+            <label>默认发音</label>
+            <p class="form-hint">查词和复习时的默认朗读口音</p>
+            <div class="count-options">
+                <label class="count-option">
+                    <input type="radio" name="default_accent" value="en"
+                        {% if settings.default_accent == 'en' %}checked{% endif %}>
+                    <span>🇬🇧 英音</span>
+                </label>
+                <label class="count-option">
+                    <input type="radio" name="default_accent" value="us"
+                        {% if settings.default_accent == 'us' %}checked{% endif %}>
+                    <span>🇺🇸 美音</span>
+                </label>
+            </div>
+            <p class="form-hint" style="margin-top:8px;">
+                💡 复习时<strong>单击音标</strong>可临时切换到另一种口音（仅本次有效）
+            </p>
+        </div>
+
+        {# 自动朗读开关 #}
+        <div class="form-group">
+            <label class="switch-label">
+                <input type="checkbox" name="auto_pronounce" value="1"
+                    {% if settings.auto_pronounce %}checked{% endif %}>
+                <span>自动朗读单词</span>
+            </label>
+            <p class="form-hint">开启后，查词和复习时会自动播放单词发音（用默认口音）</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary">保存设置</button>
+    </form>
+
+    {# 手机号绑定（用于找回密码） #}
+    <div class="phone-section" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+        <h3>📱 手机号绑定</h3>
+        <p class="form-hint">绑定手机号后，可通过短信验证码找回密码</p>
+        {% if phone %}
+            <p>当前绑定：<strong>{{ phone[:3] }}****{{ phone[-4:] }}</strong></p>
+        {% else %}
+            <p style="color: #d9534f;">尚未绑定手机号</p>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('settings.bind_phone') }}" style="margin-top: 10px;">
+            <div class="form-group">
+                <label>新手机号</label>
+                <input type="tel" name="phone" placeholder="请输入11位手机号" maxlength="11" required>
+            </div>
+            <button type="submit" name="action" value="send_code" class="btn btn-outline">发送验证码</button>
+        </form>
+
+        <form method="POST" action="{{ url_for('settings.bind_phone') }}" style="margin-top: 10px;">
+            <div class="form-group">
+                <label>验证码</label>
+                <input type="text" name="code" placeholder="请输入6位验证码" maxlength="6" required>
+            </div>
+            <button type="submit" name="action" value="verify" class="btn btn-primary">确认绑定</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

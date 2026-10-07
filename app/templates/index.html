@@ -1,0 +1,87 @@
+{# 首页：显示学习概况和快捷入口 #}
+{% extends "base.html" %}
+
+{% block title %}我的背单词{% endblock %}
+
+{% block content %}
+{% if g.user %}
+{# 已登录：显示学习概况 #}
+<div class="home-section">
+    <h1>你好，{{ g.user['username'] }}！</h1>
+
+    {# 今日复习状态 #}
+    <div class="home-card" onclick="window.location.href='{{ url_for('review.index') }}'">
+        <div class="home-card-icon">📚</div>
+        <div class="home-card-body">
+            <h2>今日复习</h2>
+            <p>
+                {% if due_count > 0 %}
+                    有 <strong>{{ due_count }}</strong> 个单词待复习
+                {% else %}
+                    今日复习已完成！
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    {# 生词本概况 #}
+    <div class="home-card" onclick="window.location.href='{{ url_for('words.index') }}'">
+        <div class="home-card-icon">📖</div>
+        <div class="home-card-body">
+            <h2>生词本</h2>
+            <p>共 <strong>{{ word_count }}</strong> 个单词</p>
+        </div>
+    </div>
+
+    {# 查词入口 #}
+    <div class="home-card" onclick="window.location.href='{{ url_for('words.search') }}'">
+        <div class="home-card-icon">🔍</div>
+        <div class="home-card-body">
+            <h2>查词</h2>
+            <p>搜索单词，加入生词本</p>
+        </div>
+    </div>
+</div>
+
+{% else %}
+{# 未登录：欢迎页 #}
+<div class="home-welcome">
+    <h1>我的背单词</h1>
+    <p class="home-subtitle">基于 SM-2 记忆曲线的高效背单词工具</p>
+
+    <div class="home-features">
+        <div class="home-feature">
+            <span class="home-feature-icon">🧠</span>
+            <h3>科学复习</h3>
+            <p>SM-2 算法自动安排复习时间</p>
+        </div>
+        <div class="home-feature">
+            <span class="home-feature-icon">📖</span>
+            <h3>生词本</h3>
+            <p>查词一键收藏，随时复习</p>
+        </div>
+        <div class="home-feature">
+            <span class="home-feature-icon">✏️</span>
+            <h3>拼写巩固</h3>
+            <p>看中文拼英文，巩固记忆</p>
+        </div>
+        <div class="home-feature">
+            <span class="home-feature-icon">🔊</span>
+            <h3>发音练习</h3>
+            <p>英音/美音切换，自动朗读</p>
+        </div>
+        <div class="home-feature">
+            <span class="home-feature-icon">🤖</span>
+            <h3>AI 问答</h3>
+            <p>不懂就问，AI 帮你解释</p>
+        </div>
+    </div>
+
+    <div class="home-cta">
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">开始使用</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-outline">已有账号，登录</a>
+    </div>
+</div>
+{% endif %}
+</div>
+{% endblock %}

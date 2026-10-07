@@ -1,0 +1,46 @@
+{# 回想轮（参考 subtract）：只显示中文释义，遮住英文，判断能否想起单词 #}
+{% extends "base.html" %}
+
+{% block title %}复习 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="review-recall">
+    <div class="judge-progress">{{ current_idx }}/{{ total }}</div>
+
+    <div class="recall-card">
+        {# 英文单词区：遮住（灰色占位）#}
+        <div class="recall-word-area">
+            <div class="recall-word-blur">
+                <div class="meaning-blur"></div>
+                <div class="meaning-blur short"></div>
+            </div>
+        </div>
+
+        {# 中文释义 #}
+        <div class="recall-meanings">
+            {% for m in parsed_meanings %}
+                <div class="recall-meaning-line">
+                    {% if m.pos %}<span class="reveal-pos">{{ m.pos }}</span>{% endif %}
+                    {% for meaning in m.meanings %}
+                        {{ meaning }}{% if not loop.last %}，{% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <p class="recall-hint">瞬间想起单词，选「认识」<br>思考后想起单词，选「模糊」</p>
+    </div>
+
+    {# 底部三个按钮：点完跳到完整释义页，不直接下一词 #}
+    <div class="judge-buttons">
+        <form method="POST" action="{{ url_for('review.recall') }}">
+            <input type="hidden" name="review_id" value="{{ item.review_id }}">
+            <div class="judge-btn-row">
+                <button type="submit" name="action" value="know" class="judge-btn know">认识</button>
+                <button type="submit" name="action" value="vague" class="judge-btn vague">模糊</button>
+                <button type="submit" name="action" value="dontknow" class="judge-btn forget">不认识</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

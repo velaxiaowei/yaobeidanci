@@ -1,0 +1,1686 @@
+/* ============================================================
+   全站样式表。本步只放最基础的清爽排版，
+   "不背单词"风格的卡片、配色、手机适配以后在对应步骤逐步打磨。
+   ============================================================ */
+
+/* 让所有元素的宽高计算把边框和内边距算进去，布局更好控制 */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background-color: #f5f6f8;
+    color: #222;
+    line-height: 1.6;
+}
+
+/* 顶部导航栏 */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.navbar .brand {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2b7de9;
+    text-decoration: none;
+}
+
+.nav-links a {
+    margin-left: 18px;
+    color: #444;
+    text-decoration: none;
+}
+
+.nav-links a:hover {
+    color: #2b7de9;
+}
+
+/* 页面主体内容区：限制最大宽度并居中 */
+.container {
+    max-width: 720px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
+/* ========== 表单样式 ========== */
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d0d4da;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+.form-group input:focus {
+    border-color: #2b7de9;
+    outline: none;
+}
+
+/* 按钮样式 */
+.btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #2b7de9;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #1a6dd4;
+}
+
+/* 错误消息（红色文字） */
+.error {
+    color: #e74c3c;
+    background-color: #fdf0ef;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+/* ========== 查词页样式 ========== */
+
+/* 搜索表单：输入框和按钮横排 */
+.search-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #d0d4da;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+.search-input:focus {
+    border-color: #2b7de9;
+    outline: none;
+}
+
+.search-form .btn {
+    width: auto;
+    padding: 10px 20px;
+}
+
+/* 单词卡片：查到释义后的展示区域 */
+.word-card {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* 单词标题行：单词 + 音标 */
+.word-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+/* 可发音元素：点击播放单词发音 */
+.pronounceable {
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s;
+}
+
+.pronounceable:hover {
+    opacity: 0.7;
+}
+
+.pronounceable:active {
+    opacity: 0.5;
+}
+
+/* 查词页的"点击发音"小提示 */
+.pronounce-hint {
+    font-size: 12px;
+    color: #aaa;
+    margin-left: 4px;
+}
+
+.word-title {
+    margin: 0;
+    font-size: 28px;
+    color: #222;
+}
+
+.phonetic {
+    font-size: 16px;
+    color: #888;
+}
+
+/* ==================== 首页 ==================== */
+.home-section h1, .home-welcome h1 {
+    margin-bottom: 24px;
+}
+
+.home-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.1s;
+}
+
+.home-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+.home-card:active { transform: scale(0.98); }
+
+.home-card-icon { font-size: 32px; }
+.home-card-body h2 { margin: 0 0 4px 0; font-size: 18px; }
+.home-card-body p { margin: 0; color: #666; }
+
+.home-welcome { text-align: center; padding: 40px 20px; }
+.home-subtitle { color: #666; font-size: 18px; margin-bottom: 32px; }
+
+.home-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    max-width: 700px;
+    margin: 0 auto 32px;
+}
+
+.home-feature {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.home-feature-icon { font-size: 36px; display: block; margin-bottom: 8px; }
+.home-feature h3 { margin: 0 0 4px 0; font-size: 16px; }
+.home-feature p { margin: 0; font-size: 13px; color: #888; }
+
+.home-cta { display: flex; gap: 12px; justify-content: center; }
+.home-cta .btn { min-width: 140px; }
+
+/* ==================== 标签行 ==================== */
+.tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    background-color: #eef1f5;
+    color: #555;
+}
+
+/* 不同类型标签用不同颜色区分 */
+.tag-collins {
+    background-color: #fff3e0;
+    color: #e67e22;
+}
+
+.tag-oxford {
+    background-color: #e8f5e9;
+    color: #27ae60;
+}
+
+.tag-exam {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.tag-freq {
+    background-color: #f3e5f5;
+    color: #8e24aa;
+}
+
+/* 分区：中文释义、英文释义、例句等 */
+.section {
+    margin-bottom: 16px;
+}
+
+.section h3 {
+    font-size: 15px;
+    color: #666;
+    margin: 0 0 8px 0;
+    border-left: 3px solid #2b7de9;
+    padding-left: 8px;
+}
+
+.meaning-line {
+    margin: 4px 0;
+    font-size: 15px;
+    color: #333;
+}
+
+/* 词典来源标签：柯林斯原版用蓝色，ECDICT 本地数据用灰色 */
+.dict-source {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: normal;
+    color: #fff;
+    background-color: #2b7de9;
+    padding: 2px 8px;
+    border-radius: 10px;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+.dict-source-local {
+    background-color: #999;
+}
+
+/* 例句：用斜体 + 浅灰色背景突出 */
+.example-line {
+    margin: 6px 0;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    font-style: italic;
+    color: #555;
+    font-size: 14px;
+}
+
+/* 加入/取消生词本按钮 */
+.wordbook-form {
+    margin-top: 20px;
+}
+
+.btn-add {
+    background-color: #2b7de9;
+}
+
+.btn-added {
+    background-color: #27ae60;
+}
+
+.btn-added:hover {
+    background-color: #219a52;
+}
+
+/* 空状态提示 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+}
+
+/* ========== 生词列表页样式 ========== */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-header h1 {
+    margin: 0;
+}
+
+.page-header .btn {
+    width: auto;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.word-count {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.word-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.word-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background-color: #fff;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.word-info {
+    flex: 1;
+}
+
+.word-text {
+    font-size: 16px;
+    font-weight: bold;
+    color: #222;
+}
+
+.word-meaning {
+    margin-left: 12px;
+    color: #666;
+    font-size: 14px;
+}
+
+.word-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-small {
+    width: auto;
+    padding: 4px 12px;
+    font-size: 13px;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.inline-form {
+    display: inline;
+}
+
+/* ========== 智能问答对话框样式 ========== */
+
+.ai-chat {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.ai-chat-title {
+    font-size: 16px;
+    margin: 0 0 6px 0;
+    color: #222;
+}
+
+.ai-chat-hint {
+    font-size: 13px;
+    color: #888;
+    margin: 0 0 12px 0;
+}
+
+/* 对话记录区 */
+.chat-messages {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 单条消息气泡 */
+.chat-msg {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: pre-wrap;  /* 保留换行 */
+}
+
+/* 用户消息：靠右，蓝色背景 */
+.chat-msg-user {
+    align-self: flex-end;
+    background-color: #2b7de9;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+/* AI 消息：靠左，灰色背景 */
+.chat-msg-ai {
+    align-self: flex-start;
+    background-color: #f0f2f5;
+    color: #333;
+    border-bottom-left-radius: 4px;
+}
+
+/* "正在思考..."的闪烁动画 */
+.chat-thinking {
+    font-style: italic;
+    color: #999;
+    animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* 输入区 */
+.chat-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #d0d4da;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.chat-input:focus {
+    border-color: #2b7de9;
+    outline: none;
+}
+
+.btn-chat-send {
+    width: auto;
+    padding: 10px 18px;
+    font-size: 14px;
+}
+
+.btn-chat-send:disabled {
+    background-color: #a0c4f0;
+    cursor: not-allowed;
+}
+
+/* ========== 选中文字浮出的工具栏（存例句 / 存笔记）========== */
+.floating-toolbar {
+    position: absolute;
+    z-index: 9999;
+    display: flex;
+    gap: 4px;
+    background-color: #2b7de9;
+    border-radius: 6px;
+    padding: 3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.floating-btn {
+    padding: 5px 10px;
+    background-color: transparent;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.floating-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.floating-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ========== 笔记区样式 ========== */
+.note-item {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.note-time {
+    font-size: 12px;
+    color: #999;
+}
+
+.note-content {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    color: #333;
+    white-space: pre-wrap;
+}
+
+.note-item .btn-danger-link {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+}
+
+.note-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-top: 10px;
+}
+
+.note-input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #d0d4da;
+    border-radius: 6px;
+    font-size: 14px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.note-input:focus {
+    border-color: #2b7de9;
+    outline: none;
+}
+
+/* ========== 已保存例句样式 ========== */
+.saved-example-item {
+    background-color: #fffbe6;
+    border: 1px solid #ffe58f;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.saved-example-text {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    color: #333;
+    white-space: pre-wrap;
+}
+
+.saved-example-text-inline {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    color: #555;
+}
+
+/* 例句来源标签颜色 */
+.tag-ai {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.tag-dictionary {
+    background-color: #e8f5e9;
+    color: #27ae60;
+}
+
+.tag-manual {
+    background-color: #f3e5f5;
+    color: #8e24aa;
+}
+
+.example-source {
+    font-size: 11px;
+    margin-right: 6px;
+}
+
+/* 小链接 */
+.link-small {
+    font-size: 12px;
+    color: #2b7de9;
+    text-decoration: none;
+    font-weight: normal;
+}
+
+.link-small:hover {
+    text-decoration: underline;
+}
+
+/* 单词链接（例句库里） */
+.word-text-link {
+    font-size: 16px;
+    font-weight: bold;
+    color: #2b7de9;
+    text-decoration: none;
+}
+
+.word-text-link:hover {
+    text-decoration: underline;
+}
+
+/* 危险链接按钮（删除笔记/例句） */
+.btn-danger-link {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0;
+}
+
+.btn-danger-link:hover {
+    text-decoration: underline;
+}
+
+/* 空提示 */
+.empty-hint {
+    color: #999;
+    font-size: 13px;
+    margin: 0;
+}
+
+/* ========== 固定搭配列表 ========== */
+.collocation-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+}
+
+.collocation-list li {
+    padding: 8px 12px;
+    background-color: #f0f7ff;
+    border-left: 3px solid #2b7de9;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #333;
+}
+
+/* 描边按钮（生成搭配用） */
+.btn-outline {
+    background-color: #fff;
+    color: #2b7de9;
+    border: 1px solid #2b7de9;
+}
+
+.btn-outline:hover {
+    background-color: #e8f1fd;
+}
+
+/* ========== 复习入口页 ========== */
+.review-index {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.review-index h1 {
+    margin-bottom: 30px;
+}
+
+.review-stats {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    flex: 1;
+    min-width: 100px;
+    max-width: 160px;
+    padding: 20px 10px;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    border: 2px solid #e0e0e0;
+}
+
+.stat-due {
+    background-color: #fff7e6;
+    border-color: #ffd591;
+}
+
+.stat-total {
+    background-color: #e6f7ff;
+    border-color: #91d5ff;
+}
+
+.stat-mastered {
+    background-color: #f6ffed;
+    border-color: #b7eb8f;
+}
+
+.stat-number {
+    font-size: 36px;
+    font-weight: bold;
+    color: #333;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #666;
+}
+
+/* 大号主按钮（开始复习） */
+.btn-primary {
+    display: inline-block;
+    text-decoration: none;
+    background-color: #2b7de9;
+    color: #fff;
+    padding: 14px 40px;
+    font-size: 18px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.btn-primary:hover {
+    background-color: #1a6dd4;
+    color: #fff;
+}
+
+.btn-large {
+    font-size: 18px;
+    padding: 14px 40px;
+}
+
+/* ========== 复习卡片页 ========== */
+.review-session {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.session-progress {
+    margin-bottom: 20px;
+}
+
+.session-progress a {
+    color: #2b7de9;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.word-card {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.word-display {
+    font-size: 48px;
+    font-weight: bold;
+    margin: 0 0 16px 0;
+    color: #222;
+}
+
+.word-hint {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.meaning-block {
+    margin-top: 24px;
+    padding: 20px;
+    background-color: #f5f7fa;
+    border-radius: 8px;
+}
+
+.meaning-text {
+    font-size: 18px;
+    color: #333;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+/* 按词性分行的释义 */
+.meaning-line {
+    font-size: 18px;
+    color: #333;
+    line-height: 1.8;
+    margin-bottom: 6px;
+}
+.meaning-pos {
+    color: #667eea;
+    font-weight: 600;
+    margin-right: 8px;
+    font-size: 16px;
+}
+.meaning-highlight {
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+/* 评分按钮（三档） */
+.rating-tip {
+    text-align: center;
+    color: #666;
+    margin-bottom: 12px;
+}
+
+.rating-buttons-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.rate-btn-3 {
+    padding: 16px 8px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    background-color: #fff;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+}
+
+.rate-btn-3:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.rate-emoji {
+    display: block;
+    font-size: 28px;
+    margin-bottom: 4px;
+}
+
+.rate-btn-3 .rate-label {
+    display: block;
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+.rate-forget { border-color: #ff4d4f; }
+.rate-forget:hover { background-color: #fff1f0; }
+.rate-vague { border-color: #ffa940; }
+.rate-vague:hover { background-color: #fff7e6; }
+.rate-know { border-color: #52c41a; }
+.rate-know:hover { background-color: #f6ffed; }
+
+/* ============ 新复习流程：判断轮/onset/四选一/回想 ============ */
+
+/* 左上角进度 */
+.judge-progress {
+    font-size: 15px;
+    color: #888;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+/* 判断轮卡片（siege 式） */
+.review-judge, .review-reveal, .review-mc, .review-recall {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.judge-card {
+    text-align: center;
+    padding: 60px 20px 40px;
+}
+
+.judge-word {
+    font-size: 52px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    color: #222;
+    letter-spacing: 1px;
+}
+
+.judge-phonetic, .reveal-phonetic {
+    font-size: 18px;
+    color: #888;
+    margin: 0 0 32px 0;
+}
+
+/* 释义隐藏的灰色占位（和 siege 一样两条模糊条） */
+.judge-meaning-placeholder, .recall-word-blur {
+    max-width: 320px;
+    margin: 0 auto 24px;
+}
+
+.meaning-blur {
+    height: 18px;
+    background-color: #e8e8e8;
+    border-radius: 9px;
+    margin-bottom: 10px;
+}
+.meaning-blur.short {
+    width: 60%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.judge-hint, .recall-hint {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.8;
+    margin-top: 32px;
+}
+
+/* 底部三按钮 */
+.judge-buttons {
+    margin-top: 40px;
+}
+
+.judge-btn-row {
+    display: flex;
+    justify-content: space-around;
+    gap: 12px;
+}
+
+.judge-btn {
+    flex: 1;
+    padding: 16px 0;
+    font-size: 18px;
+    border: 2px solid;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+}
+.judge-btn.know { border-color: #52c41a; color: #52c41a; }
+.judge-btn.know:hover { background: #f6ffed; }
+.judge-btn.vague { border-color: #ffa940; color: #ffa940; }
+.judge-btn.vague:hover { background: #fff7e6; }
+.judge-btn.forget { border-color: #ff4d4f; color: #ff4d4f; }
+.judge-btn.forget:hover { background: #fff1f0; }
+
+/* onset 页 */
+.reveal-card {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.reveal-word {
+    font-size: 48px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #222;
+}
+
+.reveal-meanings {
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto 24px;
+}
+
+.reveal-meaning-line {
+    font-size: 18px;
+    line-height: 1.8;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+.reveal-pos {
+    color: #2b7de9;
+    font-weight: 600;
+    margin-right: 6px;
+    font-size: 15px;
+}
+
+.reveal-examples {
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 16px;
+    background: #f5f7fa;
+    border-radius: 8px;
+}
+
+.reveal-example {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+    margin: 0 0 8px 0;
+}
+
+.reveal-buttons {
+    display: flex;
+    justify-content: space-around;
+    gap: 12px;
+    margin-top: 32px;
+    padding: 0 20px;
+}
+
+.reveal-form {
+    flex: 1;
+}
+
+.reveal-btn {
+    width: 100%;
+    padding: 16px 0;
+    font-size: 18px;
+    border: 2px solid;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 500;
+}
+.reveal-btn.next { border-color: #52c41a; color: #52c41a; }
+.reveal-btn.next:hover { background: #f6ffed; }
+.reveal-btn.wrong { border-color: #ff4d4f; color: #ff4d4f; }
+.reveal-btn.wrong:hover { background: #fff1f0; }
+
+/* 四选一 */
+.mc-card {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.mc-word {
+    font-size: 44px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #222;
+}
+
+.mc-phonetic {
+    font-size: 18px;
+    color: #888;
+    margin: 0 0 16px 0;
+}
+
+.mc-hint {
+    color: #aaa;
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.mc-show-answer {
+    color: #2b7de9;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.mc-option.mc-correct {
+    border-color: #52c41a;
+    background-color: #f6ffed;
+    color: #52c41a;
+}
+
+.mc-option.mc-wrong {
+    border-color: #ff4d4f;
+    background-color: #fff1f0;
+    color: #ff4d4f;
+}
+
+.mc-reveal {
+    margin-top: 24px;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.mc-next-btn {
+    margin-top: 24px;
+    width: 100%;
+}
+
+.mc-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.mc-option {
+    padding: 16px 20px;
+    font-size: 16px;
+    text-align: left;
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.5;
+    color: #333;
+}
+.mc-option:hover {
+    border-color: #2b7de9;
+    background: #f0f5ff;
+}
+
+/* 回想轮 */
+.recall-card {
+    text-align: center;
+    padding: 80px 20px 40px;
+}
+
+.recall-meanings {
+    text-align: center;
+    max-width: 400px;
+    margin: 24px auto 0;
+}
+
+.recall-meaning-line {
+    font-size: 22px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+/* 回想轮：揭示的英文单词和音标 */
+.recall-word {
+    font-size: 40px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 8px 0;
+    letter-spacing: 1px;
+}
+
+.recall-phonetic {
+    font-size: 18px;
+    color: #888;
+    margin: 0 0 16px 0;
+}
+
+/* 回想轮：揭示的例句 */
+.recall-examples {
+    margin-top: 24px;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.recall-examples .reveal-example {
+    margin: 6px 0;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    font-style: italic;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* 回想轮完整释义页：顶部返回栏 */
+.recall-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.back-form {
+    margin: 0;
+}
+
+.back-btn {
+    background: none;
+    border: 1px solid #ddd;
+    color: #666;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.back-btn:hover:not(:disabled) {
+    background-color: #f5f5f5;
+    border-color: #bbb;
+}
+
+.back-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* 柯林斯英文释义 */
+.recall-collins {
+    margin-top: 20px;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 12px 16px;
+    background-color: #f0f7ff;
+    border-radius: 8px;
+    border-left: 3px solid #2b7de9;
+}
+
+.recall-collins-text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* 结束页 */
+.round-done-page {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.round-done-page h1 {
+    font-size: 28px;
+    margin-bottom: 24px;
+}
+
+.done-stats {
+    font-size: 16px;
+    color: #555;
+    line-height: 2;
+    margin-bottom: 32px;
+}
+
+.done-stats strong {
+    color: #2b7de9;
+    font-size: 20px;
+}
+
+.done-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+.done-actions form {
+    margin: 0;
+}
+
+.done-actions .btn {
+    width: 100%;
+}
+
+.btn-ghost {
+    background: transparent;
+    color: #888;
+    border: 1px solid #d0d7de;
+}
+.btn-ghost:hover {
+    background: #f5f5f5;
+}
+
+/* 查词典折叠区 */
+.dict-section {
+    margin-bottom: 20px;
+}
+
+.btn-small {
+    padding: 6px 14px;
+    font-size: 13px;
+    width: auto;
+    margin-bottom: 10px;
+}
+
+.dict-content {
+    background-color: #f5f7fa;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 14px;
+}
+
+.dict-row {
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.dict-label {
+    display: inline-block;
+    width: 70px;
+    color: #888;
+    font-size: 12px;
+    vertical-align: top;
+}
+
+.dict-meaning {
+    display: inline;
+    color: #333;
+    white-space: pre-line;
+}
+
+.dict-examples {
+    display: inline-block;
+    margin: 0;
+    padding-left: 20px;
+    color: #555;
+}
+
+.dict-examples li {
+    margin-bottom: 4px;
+}
+
+.dict-link {
+    margin-top: 10px;
+    text-align: right;
+}
+
+.dict-link a {
+    color: #2b7de9;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.dict-empty {
+    color: #999;
+    text-align: center;
+    margin: 0;
+}
+
+/* ========== 设置页 ========== */
+.settings-page {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.settings-form {
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 28px;
+}
+
+.form-group > label {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.form-hint {
+    font-size: 13px;
+    color: #888;
+    margin: 4px 0 12px 0;
+}
+
+.count-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.count-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background-color: #fff;
+}
+
+.count-option input {
+    margin-right: 8px;
+}
+
+.count-option:hover {
+    border-color: #2b7de9;
+}
+
+.count-option:has(input:checked) {
+    border-color: #2b7de9;
+    background-color: #e8f1fd;
+}
+
+.switch-label {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.switch-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+/* ========== 拼写巩固页 ========== */
+.spelling-page {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.spelling-hint {
+    color: #888;
+    margin-bottom: 20px;
+}
+
+.spelling-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.spelling-item {
+    background-color: #f5f7fa;
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+.spelling-meaning {
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+/* 拼写输入行：输入框 + 提示按钮 + 提交按钮 */
+.spelling-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.spelling-input-row input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+/* 音标提示 */
+.phonetic-hint {
+    text-align: center;
+    margin: 12px 0;
+    padding: 10px;
+    background-color: #fffbe6;
+    border-radius: 6px;
+    border: 1px solid #ffe58f;
+}
+
+#phonetic-text {
+    font-size: 18px;
+    color: #d48806;
+    letter-spacing: 1px;
+}
+
+/* 轮廓按钮（提示按钮用） */
+.btn-outline {
+    background-color: #fff;
+    color: #2b7de9;
+    border: 1px solid #2b7de9;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.btn-outline:hover {
+    background-color: #e6f4ff;
+}
+
+.spelling-item input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+/* 拼写进度提示 */
+.spelling-progress {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+/* 拼错时的逐字符对比 */
+.compare-block {
+    margin: 16px 0;
+    padding: 16px;
+    background-color: #fff7f7;
+    border-radius: 8px;
+    border: 1px solid #ffccc7;
+}
+.compare-label {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 6px;
+}
+.compare-answer {
+    font-size: 28px;
+    font-family: "Courier New", monospace;
+    letter-spacing: 3px;
+    line-height: 1.4;
+}
+.char-correct {
+    color: #27ae60;
+    font-weight: 700;
+}
+.char-wrong {
+    color: #e74c3c;
+    font-weight: 700;
+    text-decoration: line-through;
+}
+.char-missing {
+    color: #e74c3c;
+    font-weight: 700;
+}
+.feedback-correct {
+    margin: 12px 0;
+    font-size: 16px;
+    color: #555;
+}
+.correct-word-display {
+    color: #2b7de9;
+    font-size: 22px;
+    font-family: "Courier New", monospace;
+    letter-spacing: 1px;
+}
+
+/* 拼写结果页 */
+.spelling-result {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.score {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.score strong {
+    color: #2b7de9;
+    font-size: 24px;
+}
+
+.result-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.result-item {
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.result-item.correct {
+    background-color: #f6ffed;
+    border-color: #52c41a;
+}
+
+.result-item.wrong {
+    background-color: #fff1f0;
+    border-color: #ff4d4f;
+}
+
+.result-meaning {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 4px;
+}
+
+.result-detail {
+    font-size: 14px;
+}
+
+.correct-text {
+    color: #389e0d;
+    font-weight: 600;
+}
+
+.wrong-text {
+    color: #cf1322;
+    font-weight: 600;
+}
+
+.result-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* 复习完成页 */
+.review-done {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.review-done h1 {
+    margin-bottom: 16px;
+}
+
+.done-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 500px) {
+    .rating-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .word-display {
+        font-size: 36px;
+    }
+}

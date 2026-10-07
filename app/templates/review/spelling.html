@@ -1,0 +1,226 @@
+{# 拼写巩固：一次一题，拼对下一个，拼错的一直重做到拼对为止 #}
+{% extends "base.html" %}
+
+{% block title %}拼写巩固 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="spelling-page">
+    <h1>✏️ 拼写巩固</h1>
+    <p class="spelling-hint">根据中文释义，写出对应的英文单词</p>
+    <p id="progress-hint" class="spelling-progress"></p>
+
+    {# 答题区 #}
+    <div id="quiz-area">
+        <div class="spelling-meaning" id="current-meaning"></div>
+
+        {# 听发音按钮（不显示单词，只播放发音帮助拼写）#}
+        <button id="listen-btn" class="btn btn-outline" style="margin-bottom:12px;">🔊 听发音</button>
+
+        {# 音标提示（点击按钮后显示）#}
+        <div id="phonetic-hint" class="phonetic-hint" style="display:none;">
+            <span id="phonetic-text"></span>
+        </div>
+
+        <div class="spelling-input-row">
+            <input type="text" id="answer-input" placeholder="输入英文..." autocomplete="off" autofocus>
+            <button id="hint-btn" class="btn btn-outline" title="查看音标提示">💡 提示</button>
+            <button id="submit-btn" class="btn btn-primary">提交</button>
+        </div>
+
+        {# 判分反馈（答完后显示）#}
+        <div id="feedback" style="display:none;">
+            <div id="feedback-result"></div>
+            <div id="feedback-correct" class="feedback-correct" style="display:none;">
+                正确拼写：<strong id="correct-word" class="correct-word-display"></strong>
+            </div>
+            <button id="next-btn" class="btn btn-primary" style="display:none;">下一个 →</button>
+        </div>
+    </div>
+
+    {# 全部完成 #}
+    <div id="done-area" style="display:none;">
+        <h2>🎉 拼写巩固完成！</h2>
+        <p id="done-stats"></p>
+        <form method="POST" action="{{ url_for('review.spelling') }}">
+            <button type="submit" class="btn btn-primary">返回复习主页</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// 从后端拿到的词列表（含 phonetic）
+var words = {{ words_json|safe }};
+
+// 打乱顺序
+function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+var queue = shuffle(words.slice());   // 待答题队列
+var wrongQueue = [];                  // 错题队列（拼错的词，会重做直到拼对）
+var current = null;                   // 当前题
+var correctCount = 0;
+var wrongCount = 0;                   // 累计拼错次数
+var totalCount = words.length;
+
+var meaningEl = document.getElementById("current-meaning");
+var inputEl = document.getElementById("answer-input");
+var submitBtn = document.getElementById("submit-btn");
+var hintBtn = document.getElementById("hint-btn");
+var phoneticHint = document.getElementById("phonetic-hint");
+var phoneticText = document.getElementById("phonetic-text");
+var feedbackEl = document.getElementById("feedback");
+var feedbackResult = document.getElementById("feedback-result");
+var correctWordEl = document.getElementById("correct-word");
+var feedbackCorrect = document.getElementById("feedback-correct");
+var nextBtn = document.getElementById("next-btn");
+var progressHint = document.getElementById("progress-hint");
+var quizArea = document.getElementById("quiz-area");
+var doneArea = document.getElementById("done-area");
+var doneStats = document.getElementById("done-stats");
+
+function escapeHtml(s) {
+    var div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+}
+
+// 显示下一题
+function nextQuestion() {
+    // 队列空了，看看还有没有错题要重做
+    if (queue.length === 0) {
+        if (wrongQueue.length > 0) {
+            // 还有拼错的词 → 打乱后继续做，直到全部拼对
+            queue = shuffle(wrongQueue.slice());
+            wrongQueue = [];
+            showQuestion();
+        } else {
+            // 队列和错题都空了 → 完成
+            finish();
+        }
+        return;
+    }
+    showQuestion();
+}
+
+function showQuestion() {
+    current = queue.shift();
+    meaningEl.textContent = current.meaning;
+    inputEl.value = "";
+    inputEl.disabled = false;
+    feedbackEl.style.display = "none";
+    feedbackCorrect.style.display = "none";
+    submitBtn.style.display = "inline-block";
+    nextBtn.style.display = "none";
+    // 隐藏音标提示，每题重置
+    phoneticHint.style.display = "none";
+    hintBtn.style.display = "inline-block";
+    inputEl.focus();
+
+    // 进度提示：已拼对 / 总题数，剩余题数
+    var remaining = queue.length + wrongQueue.length + 1;
+    progressHint.textContent = "已拼对 " + correctCount + "/" + totalCount +
+        "（剩余 " + remaining + " 题）";
+}
+
+// 提交答案判分
+function checkAnswer() {
+    var userAns = inputEl.value.trim();
+    if (!userAns) return;
+
+    var correct = userAns.toLowerCase() === current.word.toLowerCase();
+    inputEl.disabled = true;
+    submitBtn.style.display = "none";
+    hintBtn.style.display = "none";
+    feedbackEl.style.display = "block";
+
+    if (correct) {
+        correctCount++;
+        feedbackResult.innerHTML = '<span style="color:#27ae60;font-size:20px;">✓ 拼对了！</span>';
+        feedbackCorrect.style.display = "none";
+        // 对了，0.8 秒后自动下一个
+        setTimeout(nextQuestion, 800);
+    } else {
+        wrongCount++;
+        // 逐字符对比
+        var maxLen = Math.max(userAns.length, current.word.length);
+        var userHtml = "";
+        for (var i = 0; i < maxLen; i++) {
+            var u = userAns[i] || "";
+            var c = current.word[i] || "";
+            if (u && c && u.toLowerCase() === c.toLowerCase()) {
+                userHtml += '<span class="char-correct">' + escapeHtml(u) + "</span>";
+            } else if (u) {
+                userHtml += '<span class="char-wrong">' + escapeHtml(u) + "</span>";
+            } else {
+                userHtml += '<span class="char-missing">_</span>';
+            }
+        }
+        feedbackResult.innerHTML =
+            '<div class="compare-block">' +
+                '<div class="compare-label">你拼的：</div>' +
+                '<div class="compare-answer">' + userHtml + "</div>" +
+            "</div>";
+        correctWordEl.textContent = current.word;
+        feedbackCorrect.style.display = "block";
+        nextBtn.style.display = "inline-block";
+        // 拼错了 → 加入错题队列，后面会重做直到拼对
+        wrongQueue.push(current);
+        // 进度更新
+        var remaining = queue.length + wrongQueue.length;
+        progressHint.textContent = "已拼对 " + correctCount + "/" + totalCount +
+            "（剩余 " + remaining + " 题）";
+    }
+}
+
+// 提示按钮：显示音标
+hintBtn.addEventListener("click", function() {
+    if (current && current.phonetic) {
+        phoneticText.textContent = "/" + current.phonetic + "/";
+        phoneticHint.style.display = "block";
+        hintBtn.style.display = "none";  // 显示后隐藏按钮，避免重复点
+    } else {
+        phoneticText.textContent = "（暂无音标）";
+        phoneticHint.style.display = "block";
+        hintBtn.style.display = "none";
+    }
+});
+
+// 听发音按钮：播放当前单词的发音（不显示单词）
+var listenBtn = document.getElementById("listen-btn");
+listenBtn.addEventListener("click", function() {
+    if (current && current.word && window.pronounce) {
+        // 用用户设置的默认口音播放
+        var accent = (window.USER_PRONOUNCE && window.USER_PRONOUNCE.defaultAccent) || "en";
+        window.pronounce(current.word, accent);
+    }
+});
+
+// 全部完成
+function finish() {
+    quizArea.style.display = "none";
+    doneArea.style.display = "block";
+    doneStats.textContent = "共 " + totalCount + " 题，全部拼对！累计拼错 " + wrongCount + " 次";
+}
+
+// 事件绑定
+submitBtn.addEventListener("click", checkAnswer);
+nextBtn.addEventListener("click", nextQuestion);
+inputEl.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+        if (inputEl.disabled) {
+            nextQuestion();
+        } else {
+            checkAnswer();
+        }
+    }
+});
+
+// 开始第一题
+nextQuestion();
+</script>
+{% endblock %}

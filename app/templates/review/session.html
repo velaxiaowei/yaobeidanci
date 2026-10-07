@@ -1,0 +1,137 @@
+{# 复习卡片页：直接显示单词和三档评分按钮，选完才显示释义 #}
+{% extends "base.html" %}
+
+{% block title %}复习 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="review-session">
+    {# 顶部返回 #}
+    <div class="session-progress">
+        <a href="{{ url_for('review.index') }}">← 返回复习主页</a>
+    </div>
+
+    {# 单词卡片 #}
+    <div class="word-card">
+        <h1 class="word-display">{{ review.word }}</h1>
+
+        {# 三档评分按钮（直接显示在单词下方）#}
+        <div id="rating-buttons" class="rating-buttons-3">
+            <button type="button" data-quality="0" class="rate-btn-3 rate-forget">
+                <span class="rate-emoji">😵</span>
+                <span class="rate-label">忘记了</span>
+            </button>
+            <button type="button" data-quality="3" class="rate-btn-3 rate-vague">
+                <span class="rate-emoji">🤔</span>
+                <span class="rate-label">模糊</span>
+            </button>
+            <button type="button" data-quality="5" class="rate-btn-3 rate-know">
+                <span class="rate-emoji">😊</span>
+                <span class="rate-label">认识</span>
+            </button>
+        </div>
+
+        {# 释义区（选完评分后才显示），不默认加粗第一个 #}
+        <div id="meaning-block" class="meaning-block" style="display:none;">
+            {% for item in parsed_meanings %}
+                <div class="meaning-line">
+                    {% if item.pos %}<span class="meaning-pos">{{ item.pos }}</span>{% endif %}
+                    {% for m in item.meanings %}
+                        {{ m }}{% if not loop.last %}，{% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# 查词典折叠区（选完评分后才出现，英文释义放这里）#}
+    <div id="dict-section" class="dict-section" style="display:none;">
+        <button id="toggle-dict-btn" class="btn btn-outline btn-small">📖 查词典 ▼</button>
+        <div id="dict-content" class="dict-content" style="display:none;">
+            {% if dict_info %}
+                {% if dict_info.phonetic %}
+                    <div class="dict-row"><span class="dict-label">音标</span> {{ dict_info.phonetic }}</div>
+                {% endif %}
+                {% if dict_info.definition %}
+                    <div class="dict-row">
+                        <span class="dict-label">英文释义</span>
+                        <div class="dict-meaning">{{ dict_info.definition }}</div>
+                    </div>
+                {% endif %}
+                {% if dict_info.examples %}
+                    <div class="dict-row">
+                        <span class="dict-label">例句</span>
+                        <ul class="dict-examples">
+                            {% for ex in dict_info.examples[:3] %}
+                                <li>{{ ex }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                {% if dict_info.exchange %}
+                    <div class="dict-row"><span class="dict-label">词形变化</span> {{ dict_info.exchange }}</div>
+                {% endif %}
+                <div class="dict-link">
+                    <a href="{{ url_for('words.search') }}?q={{ review.word }}" target="_blank">去查词页看详情 →</a>
+                </div>
+            {% else %}
+                <p class="dict-empty">词典里没找到这个词</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# 确认区（选完评分后显示）#}
+    <div id="confirm-area" style="display:none;">
+        <form id="rating-form" method="POST" action="{{ url_for('review.session') }}">
+            <input type="hidden" name="review_id" value="{{ review.review_id }}">
+            <input type="hidden" name="quality" id="quality-input" value="">
+            <button type="submit" class="btn btn-primary">下一个 →</button>
+            <button type="button" id="wrong-btn" class="btn btn-danger" style="display:none;">
+                ❌ 记错了（按忘记处理）
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+// 点评分按钮：记录 quality，显示释义 + 查词典 + 确认区
+document.querySelectorAll("#rating-buttons .rate-btn-3").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+        var quality = this.getAttribute("data-quality");
+        document.getElementById("quality-input").value = quality;
+
+        // 显示释义、查词典区、确认区，隐藏评分按钮
+        document.getElementById("meaning-block").style.display = "block";
+        document.getElementById("dict-section").style.display = "block";
+        document.getElementById("confirm-area").style.display = "block";
+        document.getElementById("rating-buttons").style.display = "none";
+
+        // 只有选了"认识"(quality=5)才显示"记错了"按钮
+        var wrongBtn = document.getElementById("wrong-btn");
+        if (quality === "5") {
+            wrongBtn.style.display = "inline-block";
+        } else {
+            wrongBtn.style.display = "none";
+        }
+    });
+});
+
+// "记错了"：把 quality 改成 0，然后提交
+document.getElementById("wrong-btn").addEventListener("click", function() {
+    document.getElementById("quality-input").value = "0";
+    document.getElementById("rating-form").submit();
+});
+
+// 查词典折叠/展开
+document.getElementById("toggle-dict-btn").addEventListener("click", function() {
+    var content = document.getElementById("dict-content");
+    var btn = this;
+    if (content.style.display === "none") {
+        content.style.display = "block";
+        btn.textContent = "📖 收起词典 ▲";
+    } else {
+        content.style.display = "none";
+        btn.textContent = "📖 查词典 ▼";
+    }
+});
+</script>
+{% endblock %}

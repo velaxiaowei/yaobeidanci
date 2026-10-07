@@ -1,0 +1,38 @@
+{# 例句库（素材库）：浏览当前用户保存的所有例句 #}
+{% extends "base.html" %}
+
+{% block title %}例句库 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📚 我的例句库</h1>
+    <a href="{{ url_for('words.search') }}" class="btn btn-small">去查词</a>
+</div>
+
+{% if examples %}
+    <p class="word-count">共 {{ examples|length }} 条例句</p>
+    <ul class="word-list">
+        {% for ex in examples %}
+        <li class="word-item">
+            <div class="word-info">
+                <a href="{{ url_for('words.search', q=ex.word) }}" class="word-text-link">{{ ex.word }}</a>
+                <span class="example-source tag tag-{{ ex.source }}">{{ ex.source }}</span>
+                <p class="saved-example-text-inline">{{ ex.sentence }}</p>
+            </div>
+            <div class="word-actions">
+                <form method="post" action="{{ url_for('words.delete_example', example_id=ex.id) }}" class="inline-form">
+                    <button type="submit" class="btn btn-small btn-danger"
+                            onclick="return confirm('确定删除这条例句吗？')">删除</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="empty-state">
+        <p>例句库还是空的。</p>
+        <p>去 <a href="{{ url_for('words.search') }}">查词</a>，选中任何例句文字，点浮出的"保存到例句库"按钮即可。</p>
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,44 @@
+{# 生词本列表页：显示当前用户的全部生词，可删除 #}
+{% extends "base.html" %}
+
+{% block title %}我的生词本 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>我的生词本</h1>
+    <a href="{{ url_for('words.search') }}" class="btn">+ 查词加词</a>
+</div>
+
+{% if words %}
+    {# 生词数量统计 #}
+    <p class="word-count">共 {{ words|length }} 个单词</p>
+
+    {# 生词列表 #}
+    <ul class="word-list">
+        {% for word in words %}
+        <li class="word-item">
+            <div class="word-info">
+                <span class="word-text pronounceable" data-word="{{ word.word }}">{{ word.word }}</span>
+                <span class="word-meaning">{{ word.meaning }}</span>
+            </div>
+            <div class="word-actions">
+                {# 查这个词的详情（跳转到搜索页） #}
+                <a href="{{ url_for('words.search', q=word.word) }}" class="btn btn-small">查词</a>
+                {# 删除按钮：用 form 发 POST 请求，因为删除是"改"操作，不能用 GET #}
+                <form method="post" action="{{ url_for('words.delete', word_id=word.id) }}" class="inline-form">
+                    <button type="submit" class="btn btn-small btn-danger"
+                            onclick="return confirm('确定删除 {{ word.word }} 吗？')">删除</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    {# 生词本为空时的提示 #}
+    <div class="empty-state">
+        <p>你的生词本还是空的。</p>
+        <p>去 <a href="{{ url_for('words.search') }}">查词</a> 页面，把不认识的词加进来吧！</p>
+    </div>
+{% endif %}
+
+{% endblock %}

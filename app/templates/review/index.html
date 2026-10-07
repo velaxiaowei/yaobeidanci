@@ -1,0 +1,38 @@
+{# 复习入口页：显示今日待复习数 + 开始复习按钮 #}
+{% extends "base.html" %}
+
+{% block title %}复习 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="review-index">
+    <h1>📚 今日复习</h1>
+
+    {# 三块统计卡片 #}
+    <div class="review-stats">
+        <div class="stat-card stat-due">
+            <div class="stat-number">{{ due_count }}</div>
+            <div class="stat-label">今日待复习</div>
+        </div>
+        <div class="stat-card stat-total">
+            <div class="stat-number">{{ total_count }}</div>
+            <div class="stat-label">生词总数</div>
+        </div>
+        <div class="stat-card stat-mastered">
+            <div class="stat-number">{{ mastered_count }}</div>
+            <div class="stat-label">已掌握</div>
+        </div>
+    </div>
+
+    {# 开始复习按钮：根据是否有待复习决定状态 #}
+    {% if due_count > 0 %}
+        <a href="{{ url_for('review.session') }}" class="btn btn-primary btn-large">
+            🚀 开始复习（{{ due_count }} 个）
+        </a>
+    {% else %}
+        <div class="empty-state">
+            <p>✅ 今日复习已完成！</p>
+            <p>去 <a href="{{ url_for('words.search') }}">查词</a> 加点新词，或者明天再来。</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

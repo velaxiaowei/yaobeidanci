@@ -1,0 +1,33 @@
+{# 拼写巩固结果页 #}
+{% extends "base.html" %}
+
+{% block title %}拼写结果 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="spelling-result">
+    <h1>📝 拼写结果</h1>
+    {% set correct_count = results | selectattr('correct') | list | length %}
+    <p class="score">答对 <strong>{{ correct_count }}</strong> / {{ results|length }}</p>
+
+    <div class="result-list">
+        {% for r in results %}
+            <div class="result-item {{ 'correct' if r.correct else 'wrong' }}">
+                <div class="result-word">
+                    <span class="result-meaning">{{ r.meaning[:40] }}</span>
+                </div>
+                <div class="result-detail">
+                    你的答案：<span class="{{ 'correct-text' if r.correct else 'wrong-text' }}">{{ r.user_answer or '(空)' }}</span>
+                    {% if not r.correct %}
+                        ｜ 正确答案：<span class="correct-text">{{ r.word }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="result-actions">
+        <a href="{{ url_for('review.spelling') }}" class="btn btn-outline">再来一组</a>
+        <a href="{{ url_for('review.index') }}" class="btn btn-primary">返回复习主页</a>
+    </div>
+</div>
+{% endblock %}

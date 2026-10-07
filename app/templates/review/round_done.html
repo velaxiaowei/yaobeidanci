@@ -1,0 +1,28 @@
+{# 本轮复习完成页：这组词复习完啦，选择拼写全部/拼写错词/退出 #}
+{% extends "base.html" %}
+
+{% block title %}复习完成 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="round-done-page">
+    <h1>🎉 这组词已经复习完啦</h1>
+
+    <div class="done-stats">
+        <p>本组共 <strong>{{ total }}</strong> 个词</p>
+        <p>认识 <strong>{{ known_count }}</strong> 个 · 模糊 <strong>{{ vague_count }}</strong> 个</p>
+        {% if wrong_count > 0 %}
+            <p>回想不起来 <strong>{{ wrong_count }}</strong> 个</p>
+        {% endif %}
+    </div>
+
+    <div class="done-actions">
+        <a href="{{ url_for('review.spelling', mode='all') }}" class="btn btn-primary">✏️ 拼写全部</a>
+        {% if wrong_count > 0 %}
+            <a href="{{ url_for('review.spelling', mode='wrong') }}" class="btn btn-outline">拼写错词（{{ wrong_count }}）</a>
+        {% endif %}
+        <form method="POST" action="{{ url_for('review.finish') }}">
+            <button type="submit" class="btn btn-ghost">退出复习</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

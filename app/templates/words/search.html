@@ -1,0 +1,453 @@
+{# 生词搜索页：输入单词 → 显示释义 → 一键加入/取消生词本 #}
+{% extends "base.html" %}
+
+{% block title %}查词 - 我的背单词{% endblock %}
+
+{% block content %}
+<h1>查词</h1>
+
+{# ====== 搜索框 ====== #}
+{# method="get"：搜索词会出现在 URL 里（/words/search?q=abandon），方便刷新和分享 #}
+<form method="get" action="{{ url_for('words.search') }}" class="search-form">
+    <input type="text" name="q" value="{{ q }}" placeholder="输入英文单词，例如 abandon"
+           autofocus class="search-input">
+    <button type="submit" class="btn">查词</button>
+</form>
+
+{# ====== 查到释义时显示 ====== #}
+{% if result %}
+<div class="word-card">
+    {# 单词标题 + 音标（点击可发音，单击切换英/美音）#}
+    <div class="word-header pronounceable" data-word="{{ result.word }}" data-autoplay="1">
+        <h2 class="word-title">{{ result.word }}</h2>
+        {% if result.phonetic %}
+            <span class="phonetic">（英）/{{ result.phonetic }}/</span>
+        {% endif %}
+        <span class="pronounce-hint">🔊 点击发音</span>
+    </div>
+
+    {# ====== 标签区：考试标签 + 词频 + 重要度 ====== #}
+    {# 这些信息都来自 ECDICT 本地词库，告诉用户这个词的"分量" #}
+    <div class="tag-row">
+        {# 柯林斯星级：1-5星，越高越常用 #}
+        {% if result.collins %}
+            <span class="tag tag-collins">柯林斯 {{ result.collins }} 星</span>
+        {% endif %}
+        {# 牛津3000核心词标记 #}
+        {% if result.oxford %}
+            <span class="tag tag-oxford">牛津3000</span>
+        {% endif %}
+        {# 考试标签：cet4/cet6/ky/toefl/ielts 等 #}
+        {% if result.tag %}
+            {% for t in result.tag.split(' ') %}
+                {% if t.strip() %}
+                    <span class="tag tag-exam">{{ t }}</span>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {# 当代语料库词频排名：数字越小越常用 #}
+        {% if result.frq %}
+            <span class="tag tag-freq">词频 #{{ result.frq }}</span>
+        {% endif %}
+    </div>
+
+    {# 中文释义 #}
+    {% if result.translation %}
+        <div class="section">
+            <h3>中文释义</h3>
+            {# 释义可能有多行，用 split 按行拆开显示 #}
+            {% for line in result.translation.split('\n') %}
+                {% if line.strip() %}
+                    <p class="meaning-line">{{ line }}</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# 英文释义：优先显示柯林斯原版（collins_definition），降级用 ECDICT #}
+    {% if result.collins_definition %}
+        <div class="section">
+            <h3>英文释义
+                {% if result.collins_examples %}
+                    <span class="dict-source">柯林斯</span>
+                {% else %}
+                    <span class="dict-source dict-source-local">ECDICT</span>
+                {% endif %}
+            </h3>
+            {% for line in result.collins_definition.split('\n') %}
+                {% if line.strip() %}
+                    <p class="meaning-line">{{ line }}</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% elif result.definition %}
+        <div class="section">
+            <h3>英文释义 <span class="dict-source dict-source-local">ECDICT</span></h3>
+            {% for line in result.definition.split('\n') %}
+                {% if line.strip() %}
+                    <p class="meaning-line">{{ line }}</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# 词形变化（可选） #}
+    {% if result.exchange %}
+        <div class="section">
+            <h3>词形变化</h3>
+            <p class="meaning-line">{{ result.exchange }}</p>
+        </div>
+    {% endif %}
+
+    {# ====== 英文例句（来自 freeDictionaryAPI，需要联网）====== #}
+    {% if result.examples %}
+        <div class="section">
+            <h3>例句</h3>
+            {% for ex in result.examples[:3] %}
+                <p class="example-line">{{ ex }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# ====== 加入/取消生词本按钮 ====== #}
+    {# 核心交互：模仿"不背单词"，按钮状态切换 #}
+    {% if in_wordbook %}
+        {# 已在生词本 → 显示"已加入 √"，点击取消 #}
+        <form method="post" action="{{ url_for('words.remove', word=result.word) }}" class="wordbook-form">
+            <button type="submit" class="btn btn-added">
+                ✓ 已加入生词本（点击取消）
+            </button>
+        </form>
+    {% else %}
+        {# 不在生词本 → 显示"加入生词本"，点击加入 #}
+        <form method="post" action="{{ url_for('words.add') }}" class="wordbook-form">
+            {# 把单词通过隐藏字段传给后端 #}
+            <input type="hidden" name="word" value="{{ result.word }}">
+            <button type="submit" class="btn btn-add">
+                + 加入生词本
+            </button>
+        </form>
+    {% endif %}
+
+    {# ====== 笔记区（仅已加入生词本时显示）====== #}
+    {% if in_wordbook %}
+    <div class="section" id="notes-section" data-word-id="{{ word_id }}">
+        <h3>📝 我的笔记</h3>
+        {# 已有的笔记列表 #}
+        <div id="notes-list">
+            {% for note in notes %}
+                <div class="note-item">
+                    <span class="note-time">{{ note.created_at.strftime('%Y-%m-%d %H:%M') if note.created_at.__class__.__name__ == 'datetime' else note.created_at }}</span>
+                    <p class="note-content">{{ note.content }}</p>
+                    <form method="post" action="{{ url_for('words.delete_note', note_id=note.id) }}" class="inline-form">
+                        <button type="submit" class="btn-small btn-danger-link">删除</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+        {# 添加笔记 #}
+        <div class="note-input-row">
+            <textarea id="note-input" class="note-input" rows="2" placeholder="写点笔记：易混词、联想、记忆技巧..."></textarea>
+            <button type="button" id="note-save" class="btn btn-small">保存笔记</button>
+        </div>
+    </div>
+
+    {# ====== 已保存的例句（仅已加入生词本时显示）====== #}
+    <div class="section" id="saved-examples-section">
+        <h3>📚 已保存的例句 <a href="{{ url_for('words.examples') }}" class="link-small">查看全部 →</a></h3>
+        <div id="saved-examples-list">
+            {% for ex in examples %}
+                <div class="saved-example-item">
+                    <span class="example-source tag tag-{{ ex.source }}">{{ ex.source }}</span>
+                    <p class="saved-example-text">{{ ex.sentence }}</p>
+                    <form method="post" action="{{ url_for('words.delete_example', example_id=ex.id) }}" class="inline-form">
+                        <button type="submit" class="btn-small btn-danger-link">删除</button>
+                    </form>
+                </div>
+            {% endfor %}
+            {% if not examples %}
+                <p class="empty-hint">还没有保存的例句。选中上方任何文字（例句、AI回答等），点浮出的按钮即可保存。</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# ====== 固定搭配区（来自 Datamuse 语料库，直接显示）====== #}
+    <div class="section">
+        <h3>🔗 固定搭配</h3>
+        {% if result.collocations %}
+            <ul class="collocation-list">
+                {% for colloc in result.collocations %}
+                    <li>{{ colloc }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-hint">暂无搭配数据。</p>
+        {% endif %}
+    </div>
+
+    {# ====== 智能问答对话框 ====== #}
+    {# 用户可以直接问大模型关于这个词的用法、场景、辨析等问题 #}
+    <div class="ai-chat">
+        <h3 class="ai-chat-title">💬 智能问答</h3>
+
+        {# 对话记录区 #}
+        <div id="chat-messages" class="chat-messages"></div>
+
+        {# 输入区 #}
+        <div class="chat-input-row">
+            <input type="text" id="chat-input" class="chat-input"
+                   placeholder="关于「{{ result.word }}」有什么想问的？" autocomplete="off">
+            <button type="button" id="chat-send" class="btn btn-chat-send">发送</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# ====== 搜索了但没查到 ====== #}
+{% if q and not result %}
+<div class="empty-state">
+    <p>没有找到 "{{ q }}" 的释义。</p>
+    <p>试试检查拼写，或者换一个词。</p>
+</div>
+{% endif %}
+
+{# ====== 智能问答对话框的交互逻辑 ====== #}
+{% if result %}
+<script>
+// 当前查的单词，后端渲染时传进来
+const CURRENT_WORD = "{{ result.word }}";
+const WORD_ID = {{ word_id or 'null' }};  // 该词在 words 表的 id（未加入生词本时为 null）
+
+// 获取 DOM 元素
+const chatInput = document.getElementById("chat-input");
+const chatSend = document.getElementById("chat-send");
+const chatMessages = document.getElementById("chat-messages");
+
+// 往对话框里追加一条消息
+function appendMessage(role, text) {
+    const div = document.createElement("div");
+    div.className = "chat-msg chat-msg-" + role;  // role: user / ai
+    div.textContent = text;
+    chatMessages.appendChild(div);
+    // 滚动到底部
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// 发送问题
+async function sendQuestion() {
+    const question = chatInput.value.trim();
+    if (!question) return;
+
+    // 1. 显示用户的问题
+    appendMessage("user", question);
+    chatInput.value = "";
+    chatSend.disabled = true;  // 防止重复点击
+
+    // 2. 显示"正在思考..."
+    const thinkingDiv = document.createElement("div");
+    thinkingDiv.className = "chat-msg chat-msg-ai chat-thinking";
+    thinkingDiv.textContent = "正在思考...";
+    chatMessages.appendChild(thinkingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+        // 3. 发请求给后端
+        const resp = await fetch("{{ url_for('words.ask') }}", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                word: CURRENT_WORD,
+                question: question,
+            }),
+        });
+        const data = await resp.json();
+
+        // 4. 替换"正在思考..."为实际回答
+        thinkingDiv.textContent = data.answer;
+        thinkingDiv.classList.remove("chat-thinking");
+
+    } catch (err) {
+        thinkingDiv.textContent = "⚠️ 网络错误，请稍后重试。";
+        thinkingDiv.classList.remove("chat-thinking");
+    } finally {
+        chatSend.disabled = false;
+        chatInput.focus();
+    }
+}
+
+// 点击发送按钮
+chatSend.addEventListener("click", sendQuestion);
+
+// 按回车也能发送
+chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        sendQuestion();
+    }
+});
+
+// ============================================================
+// 生成固定搭配（调用 AI）
+// ============================================================
+async function generateCollocations() {
+    const btn = document.getElementById("collocations-btn");
+    const resultDiv = document.getElementById("collocations-result");
+
+    btn.disabled = true;
+    btn.textContent = "生成中...";
+    resultDiv.innerHTML = '<p class="empty-hint">AI 正在生成搭配，请稍候...</p>';
+
+    try {
+        const resp = await fetch("{{ url_for('words.ask') }}", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                word: CURRENT_WORD,
+                question: `请给出单词"${CURRENT_WORD}"的4个最常见固定搭配，格式严格为：
+1. 搭配短语 - 中文意思
+2. 搭配短语 - 中文意思
+3. 搭配短语 - 中文意思
+4. 搭配短语 - 中文意思
+只输出这4行，不要其他解释。`,
+            }),
+        });
+        const data = await resp.json();
+
+        if (data.ok) {
+            // 把 AI 返回的每行解析成搭配项
+            const lines = data.answer.split("\n").filter(l => l.trim());
+            let html = '<ul class="collocation-list">';
+            lines.forEach(line => {
+                // 去掉开头的序号 "1. " "2. " 等
+                const clean = line.replace(/^\d+[\.\、\)]\s*/, "").trim();
+                if (clean) html += `<li>${clean}</li>`;
+            });
+            html += "</ul>";
+            resultDiv.innerHTML = html;
+        } else {
+            resultDiv.innerHTML = `<p class="error">${data.msg}</p>`;
+        }
+    } catch (err) {
+        resultDiv.innerHTML = '<p class="error">网络错误，请重试。</p>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "重新生成";
+    }
+}
+
+// ============================================================
+// 选中文字 → 浮出工具栏
+// ============================================================
+// 只在该词已加入生词本（有 WORD_ID）时才启用这个功能
+if (WORD_ID) {
+    const wordCard = document.querySelector(".word-card");
+
+    // 创建浮出的工具栏（含两个按钮：存例句 / 存笔记），默认隐藏
+    const toolbar = document.createElement("div");
+    toolbar.className = "floating-toolbar";
+    toolbar.style.display = "none";
+    toolbar.innerHTML = `
+        <button type="button" class="floating-btn" data-action="example">💾 存例句</button>
+        <button type="button" class="floating-btn" data-action="note">📝 存笔记</button>
+    `;
+    document.body.appendChild(toolbar);
+    let selectedText = "";
+
+    // 监听鼠标松开：如果有选中的文字，显示工具栏
+    document.addEventListener("mouseup", () => {
+        const sel = window.getSelection();
+        const text = sel.toString().trim();
+
+        if (text && wordCard && wordCard.contains(sel.anchorNode)) {
+            const range = sel.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            selectedText = text;
+            // 工具栏宽度约 150px，居中显示在选中文字上方
+            toolbar.style.left = (rect.left + rect.width / 2 - 75) + "px";
+            toolbar.style.top = (rect.top + window.scrollY - 40) + "px";
+            toolbar.style.display = "flex";
+        } else {
+            toolbar.style.display = "none";
+        }
+    });
+
+    // 点击页面其他地方时隐藏工具栏
+    document.addEventListener("mousedown", (e) => {
+        if (!toolbar.contains(e.target)) {
+            setTimeout(() => {
+                if (!window.getSelection().toString().trim()) toolbar.style.display = "none";
+            }, 10);
+        }
+    });
+
+    // 工具栏内任意按钮点击
+    toolbar.addEventListener("click", async (e) => {
+        const btn = e.target.closest(".floating-btn");
+        if (!btn || !selectedText) return;
+
+        const action = btn.dataset.action;
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "保存中...";
+
+        if (action === "example") {
+            // 保存到例句库
+            const resp = await fetch("{{ url_for('words.save_example') }}", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({word_id: WORD_ID, sentence: selectedText, source: "ai"}),
+            });
+            const data = await resp.json();
+            btn.textContent = data.ok ? "✅ " + data.msg : "⚠️ " + data.msg;
+        } else if (action === "note") {
+            // 保存到笔记
+            const resp = await fetch("{{ url_for('words.save_note') }}", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({word_id: WORD_ID, content: selectedText}),
+            });
+            const data = await resp.json();
+            btn.textContent = data.ok ? "✅ " + data.msg : "⚠️ " + data.msg;
+        }
+
+        setTimeout(() => {
+            toolbar.style.display = "none";
+            btn.disabled = false;
+            btn.textContent = originalText;
+            location.reload();
+        }, 1000);
+    });
+}
+
+// ============================================================
+// 保存笔记
+// ============================================================
+const noteInput = document.getElementById("note-input");
+const noteSave = document.getElementById("note-save");
+if (noteSave && WORD_ID) {
+    noteSave.addEventListener("click", async () => {
+        const content = noteInput.value.trim();
+        if (!content) return;
+
+        noteSave.disabled = true;
+        const resp = await fetch("{{ url_for('words.save_note') }}", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({word_id: WORD_ID, content: content}),
+        });
+        const data = await resp.json();
+
+        if (data.ok) {
+            noteInput.value = "";
+            location.reload();  // 刷新显示新笔记
+        } else {
+            alert(data.msg);
+            noteSave.disabled = false;
+        }
+    });
+}
+</script>
+{% endif %}
+
+{% endblock %}

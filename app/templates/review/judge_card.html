@@ -1,0 +1,42 @@
+{# 判断轮卡片（参考 siege）：单词+音标，释义隐藏，底部三按钮 #}
+{% extends "base.html" %}
+
+{% block title %}复习 - 我的背单词{% endblock %}
+
+{% block content %}
+<div class="review-judge">
+    {# 左上角进度：当前第几个/总数 #}
+    <div class="judge-progress">{{ current_idx }}/{{ total }}</div>
+
+    <div class="judge-card">
+        <div class="pronounceable" data-word="{{ item.word }}" data-autoplay="1">
+            <h1 class="judge-word">{{ item.word }}</h1>
+            {% if phonetic %}
+                <p class="judge-phonetic">（英）/{{ phonetic }}/</p>
+            {% endif %}
+        </div>
+
+        {# 释义隐藏区（灰色占位，和 siege 一样）#}
+        <div class="judge-meaning-placeholder">
+            <div class="meaning-blur"></div>
+            <div class="meaning-blur short"></div>
+        </div>
+
+        <p class="judge-hint">瞬间想起词义，选「认识」<br>思考后想起词义，选「模糊」</p>
+    </div>
+
+    {# 底部三个评分按钮 #}
+    <div class="judge-buttons">
+        <form method="POST" action="{{ url_for('review.session') }}">
+            <input type="hidden" name="review_id" value="{{ item.review_id }}">
+            <input type="hidden" name="word" value="{{ item.word }}">
+            <input type="hidden" name="meaning" value="{{ item.meaning }}">
+            <div class="judge-btn-row">
+                <button type="submit" name="action" value="known" class="judge-btn know">认识</button>
+                <button type="submit" name="action" value="vague" class="judge-btn vague">模糊</button>
+                <button type="submit" name="action" value="forgotten" class="judge-btn forget">忘记了</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

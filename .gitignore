@@ -1,0 +1,47 @@
+# ==================== Python ====================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+# ==================== 虚拟环境 ====================
+venv/
+.venv/
+env/
+
+# ==================== 环境变量 / 密钥（绝不能上传）====================
+.env
+.env.local
+.env.*.local
+
+# ==================== 数据库（用户数据，不上传）====================
+instance/words.db
+instance/dev_sms_code.txt
+
+# ==================== 大文件 / 词典数据（太大，不上传）====================
+instance/ecdict.db
+instance/*.csv
+instance/*.pdf
+instance/*.txt
+ecdict.csv
+
+# ==================== IDE ====================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ==================== 日志 / 临时文件 ====================
+*.log
+*.tmp
+
+# ==================== 操作系统 ====================
+Thumbs.db
+.DS_Store
+desktop.ini
