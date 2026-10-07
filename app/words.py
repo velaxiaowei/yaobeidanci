@@ -314,6 +314,27 @@ def examples():
     return render_template("words/examples.html", examples=rows)
 
 
+# ==================== 笔记库 ====================
+
+@bp.route("/notes")
+@login_required
+def notes():
+    """浏览当前用户保存的所有笔记（JOIN words 表显示来源单词）。
+
+    样式仿例句库：每条笔记显示来源单词（点击可跳到查词页）、笔记内容、删除按钮。
+    """
+    db = get_db()
+    # JOIN words 表，拿到笔记对应的单词（如果词被删了，外键约束会级联删除笔记，
+    # 所以这里用 INNER JOIN 没问题；如果想保留孤儿笔记可换成 LEFT JOIN）
+    rows = db.execute(
+        "SELECT n.*, w.word FROM notes n "
+        "JOIN words w ON n.word_id = w.id "
+        "WHERE n.user_id = ? ORDER BY n.created_at DESC",
+        (g.user["id"],),
+    ).fetchall()
+    return render_template("words/notes.html", notes=rows)
+
+
 # ==================== 智能问答（大模型）====================
 
 @bp.route("/ask", methods=("POST",))

@@ -29,7 +29,7 @@ def main():
 
     # 启动 Flask
     print("=" * 50)
-    print("  我的背单词 - 服务器启动中...")
+    print("  要背单词 - 服务器启动中...")
     print("  网址：http://127.0.0.1:5000")
     print("  按 Ctrl+C 停止")
     print("=" * 50)

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>constitute · 查词</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #DDDCEE;
+    color: #1E293B;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  /* 顶部导航 */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px; padding: 0 8px;
+  }
+  .logo { font-size: 18px; font-weight: 700; color: #4338CA; }
+  .nav a { color: #475569; text-decoration: none; margin-left: 24px; font-size: 14px; }
+  .nav a:hover { color: #1E293B; }
+
+  /* 主布局：左右两栏 */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 8px 32px rgba(30,41,59,0.12);
+  }
+
+  /* 左栏：单词头部 */
+  .word-head { margin-bottom: 28px; position: relative; }
+  .star-btn {
+    position: absolute; top: 8px; right: 0;
+    background: none; border: none;
+    font-size: 28px; cursor: pointer;
+    color: #94A3B8; transition: all .2s;
+    line-height: 1;
+  }
+  .star-btn:hover, .star-btn.active { color: #FBBF24; }
+  .word {
+    font-size: 64px;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+  .phonetic-row {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 12px;
+    font-size: 18px; color: #475569;
+  }
+  .speak-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(67,56,202,0.1);
+    border: none; color: #4338CA;
+    cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .speak-btn:hover { background: rgba(67,56,202,0.2); }
+  .tag {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 12px; margin-right: 6px;
+    background: rgba(255,255,255,0.7); color: #475569;
+  }
+  .tag.star { background: rgba(245,158,11,0.15); color: #B45309; }
+  .tags { margin-top: 16px; }
+
+  /* 释义区 */
+  .meaning { margin-bottom: 28px; }
+  .meaning .pos { color: #4338CA; font-style: italic; margin-right: 8px; }
+  .meaning .cn { font-size: 22px; color: #0F172A; line-height: 1.6; }
+  .meaning .en { font-size: 15px; color: #64748B; margin-top: 6px; }
+
+  /* 例句卡片 */
+  .sentence-card {
+    background: rgba(67,56,202,0.06);
+    border: 1px solid rgba(67,56,202,0.12);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .sentence-card .en { font-size: 16px; color: #1E293B; line-height: 1.6; }
+  .sentence-card .cn { font-size: 14px; color: #64748B; margin-top: 6px; }
+  .sentence-card .row {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 10px;
+  }
+  .mini-speak {
+    background: none; border: none; color: #4338CA;
+    cursor: pointer; font-size: 14px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    margin: 24px 0 16px;
+  }
+  .tab {
+    padding: 10px 16px;
+    background: none; border: none;
+    color: #64748B; font-size: 14px; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all .2s;
+  }
+  .tab.active { color: #4338CA; border-bottom-color: #4338CA; }
+  .tab-panel { display: none; padding: 12px 0; }
+  .tab-panel.active { display: block; }
+  .tab-panel .item {
+    padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05);
+    font-size: 15px; color: #334155;
+  }
+  .tab-panel .item:last-child { border-bottom: none; }
+  .empty { color: #94A3B8; font-size: 14px; padding: 20px 0; text-align: center; }
+
+  /* 右栏 AI */
+  .ai-card {
+    display: flex; flex-direction: column;
+    height: calc(100vh - 120px);
+    position: sticky; top: 24px;
+  }
+  .ai-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #0F172A; }
+  .ai-history {
+    flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .msg { padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+  .msg.user { background: rgba(67,56,202,0.1); color: #4338CA; align-self: flex-end; max-width: 80%; }
+  .msg.ai { background: rgba(255,255,255,0.7); align-self: flex-start; max-width: 85%; color: #1E293B; }
+  .ai-input {
+    display: flex; gap: 8px;
+  }
+  .ai-input input {
+    flex: 1;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #1E293B; font-size: 14px;
+    outline: none;
+  }
+  .ai-input input:focus { border-color: #4338CA; }
+  .ai-input button {
+    background: rgba(67,56,202,0.12); color: #4338CA;
+    border: none; border-radius: 10px;
+    padding: 10px 18px; font-weight: 600; cursor: pointer;
+  }
+
+  /* 底部 */
+  .bottom-bar {
+    text-align: center; margin-top: 40px; padding-bottom: 20px;
+  }
+  .next-btn {
+    background: none; border: none;
+    color: #334155; font-size: 16px; font-weight: 500;
+    cursor: pointer; padding: 8px 16px;
+    position: relative;
+  }
+  .next-btn::after {
+    content: '';
+    display: block;
+    width: 16px; height: 3px;
+    background: #10B981;
+    border-radius: 2px;
+    margin: 6px auto 0;
+  }
+
+  /* 移动端 */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .ai-card { height: auto; position: static; }
+    .word { font-size: 44px; }
+    body { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">要背单词</div>
+  <div class="nav">
+    <a href="#">复习</a>
+    <a href="#">生词本</a>
+    <a href="#">查词</a>
+    <a href="#">设置</a>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- 左侧主内容 -->
+  <div class="card">
+    <div class="word-head">
+      <button class="star-btn" title="加入生词本">☆</button>
+      <div class="word">constitute</div>
+      <div class="phonetic-row">
+        <span>/kənˈstɪtjuːt/</span>
+        <button class="speak-btn">🔊</button>
+      </div>
+      <div class="tags">
+        <span class="tag star">柯林斯 2★</span>
+        <span class="tag">CET-6</span>
+        <span class="tag">IELTS</span>
+        <span class="tag">GRE</span>
+        <span class="tag">词频 #2887</span>
+      </div>
+    </div>
+
+    <div class="meaning">
+      <div><span class="pos">vt.</span><span class="cn">构成，组成；任命</span></div>
+      <div class="en">v. to be the parts or things that form something</div>
+    </div>
+
+    <div class="sentence-card">
+      <div class="en">Women constitute a high proportion of part-time workers.</div>
+      <div class="cn">女性在兼职工作者中占很高比例。</div>
+      <div class="row">
+        <span style="font-size:12px;color:#94A3B8">来源：柯林斯</span>
+        <button class="mini-speak">🔊 朗读</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="collocations">词组搭配</button>
+      <button class="tab" data-tab="derived">派生</button>
+      <button class="tab" data-tab="root">词根</button>
+      <button class="tab" data-tab="synonyms">近义</button>
+      <button class="tab" data-tab="notes">笔记</button>
+    </div>
+
+    <div class="tab-panel active" id="panel-collocations">
+      <div class="item">constitute a threat / danger — 构成威胁</div>
+      <div class="item">constitute a majority — 占多数</div>
+      <div class="item">constitute a violation of — 构成对…的违反</div>
+    </div>
+    <div class="tab-panel" id="panel-derived">
+      <div class="item">constitution n. 宪法；构成</div>
+      <div class="item">constituent adj. 构成的；n. 选民</div>
+      <div class="item">constitutional adj. 宪法的</div>
+    </div>
+    <div class="tab-panel" id="panel-root">
+      <div class="item">con- (一起) + stitute (站立) → 站在一起 → 构成</div>
+    </div>
+    <div class="tab-panel" id="panel-synonyms">
+      <div class="item">compose, form, make up — 组成</div>
+      <div class="item">establish, set up — 设立</div>
+    </div>
+    <div class="tab-panel" id="panel-notes">
+      <div class="item">为什么我总会记成"宪法"那个单词？<br>因为 constitute 和 constitution（宪法）是同根词。</div>
+    </div>
+  </div>
+
+  <!-- 右侧 AI -->
+  <div class="card ai-card">
+    <div class="ai-title">✨ AI 智能问答</div>
+    <div class="ai-history">
+      <div class="msg user">constitute 和 compose 有什么区别？</div>
+      <div class="msg ai">constitute 强调"整体由部分构成"，常用于正式书面语；compose 更口语化，常用被动 be composed of。两者大多可互换。</div>
+    </div>
+    <div class="ai-input">
+      <input type="text" placeholder="关于 constitute 想问什么？">
+      <button>发送</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom-bar">
+  <button class="next-btn">下一词 →</button>
+</div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+  document.querySelector('.star-btn').addEventListener('click', function() {
+    this.classList.toggle('active');
+    this.textContent = this.classList.contains('active') ? '★' : '☆';
+  });
+</script>
+
+</body>
+</html>

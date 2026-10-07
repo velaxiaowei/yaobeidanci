@@ -1,7 +1,7 @@
 {# 首页：显示学习概况和快捷入口 #}
 {% extends "base.html" %}
 
-{% block title %}我的背单词{% endblock %}
+{% block title %}要背单词{% endblock %}
 
 {% block content %}
 {% if g.user %}
@@ -46,7 +46,7 @@
 {% else %}
 {# 未登录：欢迎页 #}
 <div class="home-welcome">
-    <h1>我的背单词</h1>
+    <h1>要背单词</h1>
     <p class="home-subtitle">基于 SM-2 记忆曲线的高效背单词工具</p>
 
     <div class="home-features">

@@ -1,0 +1,43 @@
+{# 笔记库：浏览当前用户保存的所有笔记（带来源单词） #}
+{% extends "base.html" %}
+
+{% block title %}笔记库 - 要背单词{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📝 我的笔记库</h1>
+    <a href="{{ url_for('words.search') }}" class="btn btn-small">去查词</a>
+</div>
+
+{% if notes %}
+    {# 笔记数量统计 #}
+    <p class="word-count">共 {{ notes|length }} 条笔记</p>
+    <ul class="word-list">
+        {% for note in notes %}
+        <li class="word-item">
+            <div class="word-info">
+                {# 来源单词：点击跳到查词页 #}
+                <a href="{{ url_for('words.search', q=note.word) }}" class="word-text-link">{{ note.word }}</a>
+                {# 笔记创建时间 #}
+                <span class="note-time">{{ note.created_at }}</span>
+                {# 笔记内容 #}
+                <p class="saved-example-text-inline">{{ note.content }}</p>
+            </div>
+            <div class="word-actions">
+                {# 删除按钮：用 form 发 POST，因为删除是改操作不能用 GET #}
+                <form method="post" action="{{ url_for('words.delete_note', note_id=note.id) }}" class="inline-form">
+                    <button type="submit" class="btn btn-small btn-danger"
+                            onclick="return confirm('确定删除这条笔记吗？')">删除</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="empty-state">
+        <p>笔记库还是空的。</p>
+        <p>去 <a href="{{ url_for('words.search') }}">查词</a>，把单词加入生词本后就能在查词页底部写笔记了。</p>
+    </div>
+{% endif %}
+
+{% endblock %}

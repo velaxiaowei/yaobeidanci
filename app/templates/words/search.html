@@ -1,207 +1,240 @@
-{# 生词搜索页：输入单词 → 显示释义 → 一键加入/取消生词本 #}
+{# 查词页（重构版）：参考 search_page_demo.html 的视觉设计
+   布局：左主内容(70%) + 右AI卡片(30%)，毛玻璃卡片，#DDDCEE 背景
+   数据全部来自后端 result，不改任何路由 #}
 {% extends "base.html" %}
 
-{% block title %}查词 - 我的背单词{% endblock %}
+{% block title %}查词 - 要背单词{% endblock %}
 
 {% block content %}
-<h1>查词</h1>
-
-{# ====== 搜索框 ====== #}
-{# method="get"：搜索词会出现在 URL 里（/words/search?q=abandon），方便刷新和分享 #}
-<form method="get" action="{{ url_for('words.search') }}" class="search-form">
+{# ====== 搜索框（保留原有功能）====== #}
+<form method="get" action="{{ url_for('words.search') }}" class="sp-search-form">
     <input type="text" name="q" value="{{ q }}" placeholder="输入英文单词，例如 abandon"
-           autofocus class="search-input">
-    <button type="submit" class="btn">查词</button>
+           autofocus class="sp-search-input">
+    <button type="submit" class="sp-search-btn">查词</button>
 </form>
 
 {# ====== 查到释义时显示 ====== #}
 {% if result %}
-<div class="word-card">
-    {# 单词标题 + 音标（点击可发音，单击切换英/美音）#}
-    <div class="word-header pronounceable" data-word="{{ result.word }}" data-autoplay="1">
-        <h2 class="word-title">{{ result.word }}</h2>
-        {% if result.phonetic %}
-            <span class="phonetic">（英）/{{ result.phonetic }}/</span>
-        {% endif %}
-        <span class="pronounce-hint">🔊 点击发音</span>
-    </div>
+<div class="search-page">
+    {# --- 主布局：左主内容 + 右AI --- #}
+    <div class="sp-layout">
 
-    {# ====== 标签区：考试标签 + 词频 + 重要度 ====== #}
-    {# 这些信息都来自 ECDICT 本地词库，告诉用户这个词的"分量" #}
-    <div class="tag-row">
-        {# 柯林斯星级：1-5星，越高越常用 #}
-        {% if result.collins %}
-            <span class="tag tag-collins">柯林斯 {{ result.collins }} 星</span>
-        {% endif %}
-        {# 牛津3000核心词标记 #}
-        {% if result.oxford %}
-            <span class="tag tag-oxford">牛津3000</span>
-        {% endif %}
-        {# 考试标签：cet4/cet6/ky/toefl/ielts 等 #}
-        {% if result.tag %}
-            {% for t in result.tag.split(' ') %}
-                {% if t.strip() %}
-                    <span class="tag tag-exam">{{ t }}</span>
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-        {# 当代语料库词频排名：数字越小越常用 #}
-        {% if result.frq %}
-            <span class="tag tag-freq">词频 #{{ result.frq }}</span>
-        {% endif %}
-    </div>
+        {# ============ 左侧主内容卡片 ============ #}
+        <div class="sp-card sp-main word-card">
+            {# ---- 单词头部：星星 + 大单词 + 音标 + 标签 ---- #}
+            <div class="sp-word-head">
+                {# 星星按钮：点一下变实心黄星=加入生词本，再点取消 #}
+                {# 用 fetch 调 /words/add 或 /words/remove，不刷新页面 #}
+                <button class="sp-star-btn {% if in_wordbook %}active{% endif %}"
+                        id="star-btn"
+                        data-word="{{ result.word }}"
+                        data-in-wordbook="{{ 1 if in_wordbook else 0 }}"
+                        title="{% if in_wordbook %}点击取消加入生词本{% else %}点击加入生词本{% endif %}">
+                    {% if in_wordbook %}★{% else %}☆{% endif %}
+                </button>
 
-    {# 中文释义 #}
-    {% if result.translation %}
-        <div class="section">
-            <h3>中文释义</h3>
-            {# 释义可能有多行，用 split 按行拆开显示 #}
-            {% for line in result.translation.split('\n') %}
-                {% if line.strip() %}
-                    <p class="meaning-line">{{ line }}</p>
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% endif %}
+                {# 超大单词 #}
+                <div class="sp-word">{{ result.word }}</div>
 
-    {# 英文释义：优先显示柯林斯原版（collins_definition），降级用 ECDICT #}
-    {% if result.collins_definition %}
-        <div class="section">
-            <h3>英文释义
-                {% if result.collins_examples %}
-                    <span class="dict-source">柯林斯</span>
-                {% else %}
-                    <span class="dict-source dict-source-local">ECDICT</span>
-                {% endif %}
-            </h3>
-            {% for line in result.collins_definition.split('\n') %}
-                {% if line.strip() %}
-                    <p class="meaning-line">{{ line }}</p>
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% elif result.definition %}
-        <div class="section">
-            <h3>英文释义 <span class="dict-source dict-source-local">ECDICT</span></h3>
-            {% for line in result.definition.split('\n') %}
-                {% if line.strip() %}
-                    <p class="meaning-line">{{ line }}</p>
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    {# 词形变化（可选） #}
-    {% if result.exchange %}
-        <div class="section">
-            <h3>词形变化</h3>
-            <p class="meaning-line">{{ result.exchange }}</p>
-        </div>
-    {% endif %}
-
-    {# ====== 英文例句（来自 freeDictionaryAPI，需要联网）====== #}
-    {% if result.examples %}
-        <div class="section">
-            <h3>例句</h3>
-            {% for ex in result.examples[:3] %}
-                <p class="example-line">{{ ex }}</p>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    {# ====== 加入/取消生词本按钮 ====== #}
-    {# 核心交互：模仿"不背单词"，按钮状态切换 #}
-    {% if in_wordbook %}
-        {# 已在生词本 → 显示"已加入 √"，点击取消 #}
-        <form method="post" action="{{ url_for('words.remove', word=result.word) }}" class="wordbook-form">
-            <button type="submit" class="btn btn-added">
-                ✓ 已加入生词本（点击取消）
-            </button>
-        </form>
-    {% else %}
-        {# 不在生词本 → 显示"加入生词本"，点击加入 #}
-        <form method="post" action="{{ url_for('words.add') }}" class="wordbook-form">
-            {# 把单词通过隐藏字段传给后端 #}
-            <input type="hidden" name="word" value="{{ result.word }}">
-            <button type="submit" class="btn btn-add">
-                + 加入生词本
-            </button>
-        </form>
-    {% endif %}
-
-    {# ====== 笔记区（仅已加入生词本时显示）====== #}
-    {% if in_wordbook %}
-    <div class="section" id="notes-section" data-word-id="{{ word_id }}">
-        <h3>📝 我的笔记</h3>
-        {# 已有的笔记列表 #}
-        <div id="notes-list">
-            {% for note in notes %}
-                <div class="note-item">
-                    <span class="note-time">{{ note.created_at.strftime('%Y-%m-%d %H:%M') if note.created_at.__class__.__name__ == 'datetime' else note.created_at }}</span>
-                    <p class="note-content">{{ note.content }}</p>
-                    <form method="post" action="{{ url_for('words.delete_note', note_id=note.id) }}" class="inline-form">
-                        <button type="submit" class="btn-small btn-danger-link">删除</button>
-                    </form>
+                {# 音标 + 发音按钮（点击切换英/美音）#}
+                <div class="sp-phonetic-row pronounceable" data-word="{{ result.word }}" data-autoplay="1">
+                    {% if result.phonetic %}
+                        <span class="sp-phonetic">（英）/{{ result.phonetic }}/</span>
+                    {% endif %}
+                    <button type="button" class="sp-speak-btn">🔊</button>
                 </div>
-            {% endfor %}
-        </div>
-        {# 添加笔记 #}
-        <div class="note-input-row">
-            <textarea id="note-input" class="note-input" rows="2" placeholder="写点笔记：易混词、联想、记忆技巧..."></textarea>
-            <button type="button" id="note-save" class="btn btn-small">保存笔记</button>
-        </div>
-    </div>
 
-    {# ====== 已保存的例句（仅已加入生词本时显示）====== #}
-    <div class="section" id="saved-examples-section">
-        <h3>📚 已保存的例句 <a href="{{ url_for('words.examples') }}" class="link-small">查看全部 →</a></h3>
-        <div id="saved-examples-list">
-            {% for ex in examples %}
-                <div class="saved-example-item">
-                    <span class="example-source tag tag-{{ ex.source }}">{{ ex.source }}</span>
-                    <p class="saved-example-text">{{ ex.sentence }}</p>
-                    <form method="post" action="{{ url_for('words.delete_example', example_id=ex.id) }}" class="inline-form">
-                        <button type="submit" class="btn-small btn-danger-link">删除</button>
-                    </form>
+                {# 标签行：柯林斯星 / 牛津3000 / 考试标签 / 词频 #}
+                <div class="sp-tags">
+                    {% if result.collins %}
+                        <span class="sp-tag sp-tag-star">柯林斯 {{ result.collins }}★</span>
+                    {% endif %}
+                    {% if result.oxford %}
+                        <span class="sp-tag">牛津3000</span>
+                    {% endif %}
+                    {% if result.tag %}
+                        {% for t in result.tag.split(' ') %}
+                            {% if t.strip() %}
+                                <span class="sp-tag">{{ t }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    {% if result.frq %}
+                        <span class="sp-tag">词频 #{{ result.frq }}</span>
+                    {% endif %}
                 </div>
-            {% endfor %}
-            {% if not examples %}
-                <p class="empty-hint">还没有保存的例句。选中上方任何文字（例句、AI回答等），点浮出的按钮即可保存。</p>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
+            </div>
 
-    {# ====== 固定搭配区（来自 Datamuse 语料库，直接显示）====== #}
-    <div class="section">
-        <h3>🔗 固定搭配</h3>
-        {% if result.collocations %}
-            <ul class="collocation-list">
-                {% for colloc in result.collocations %}
-                    <li>{{ colloc }}</li>
+            {# ---- 释义区：词性 + 中文 + 英文 ---- #}
+            <div class="sp-meaning">
+                {# 中文释义（可能有多行，按词性分行）#}
+                {% if result.translation %}
+                    {% for line in result.translation.split('\n') %}
+                        {% if line.strip() %}
+                            <div class="sp-meaning-line">
+                                {% if '. ' in line %}
+                                    {% set parts = line.split('. ', 1) %}
+                                    <span class="sp-pos">{{ parts[0] }}.</span>
+                                    <span class="sp-cn">{{ parts[1] }}</span>
+                                {% else %}
+                                    <span class="sp-cn">{{ line }}</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                {# 英文释义 #}
+                {% if result.collins_definition %}
+                    {% for line in result.collins_definition.split('\n') %}
+                        {% if line.strip() %}
+                            <div class="sp-en">{{ line }}</div>
+                        {% endif %}
+                    {% endfor %}
+                {% elif result.definition %}
+                    {% for line in result.definition.split('\n') %}
+                        {% if line.strip() %}
+                            <div class="sp-en">{{ line }}</div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            {# ---- 例句卡片（来自 freeDictionaryAPI，只有英文）---- #}
+            {% if result.examples %}
+                {% for ex in result.examples[:3] %}
+                <div class="sp-sentence-card">
+                    <div class="sp-sentence-en pronounceable" data-word="{{ result.word }}">{{ ex }}</div>
+                </div>
                 {% endfor %}
-            </ul>
-        {% else %}
-            <p class="empty-hint">暂无搭配数据。</p>
-        {% endif %}
+            {% endif %}
+
+            {# ---- 底部 Tabs：词组搭配 / 派生 / 词根 / 近义 / 笔记 ---- #}
+            <div class="sp-tabs">
+                <button class="sp-tab active" data-tab="collocations">词组搭配</button>
+                <button class="sp-tab" data-tab="derived">派生</button>
+                <button class="sp-tab" data-tab="root">词根</button>
+                <button class="sp-tab" data-tab="synonyms">近义</button>
+                <button class="sp-tab" data-tab="notes">笔记</button>
+            </div>
+
+            {# Tab 面板：词组搭配 #}
+            <div class="sp-tab-panel active" id="sp-panel-collocations">
+                {% if result.collocations %}
+                    {% for colloc in result.collocations %}
+                        <div class="sp-tab-item">{{ colloc }}</div>
+                    {% endfor %}
+                {% else %}
+                    <div class="sp-empty">暂无搭配数据。</div>
+                {% endif %}
+            </div>
+
+            {# Tab 面板：派生（用词形变化 exchange 数据）#}
+            <div class="sp-tab-panel" id="sp-panel-derived">
+                {% if result.exchange %}
+                    {# exchange 格式如 "p:constituted;d:constituted;3:constitutes;i:constituting" #}
+                    {# 按 ; 拆分，每段是 类型:值 #}
+                    {% set exchange_map = {
+                        'p': '过去式',
+                        'd': '过去分词',
+                        '3': '第三人称单数',
+                        'i': '现在分词',
+                        'r': '比较级',
+                        't': '最高级',
+                        's': '复数',
+                        '0': '词根',
+                        '1': '',
+                        '2': '',
+                    } %}
+                    {% for seg in result.exchange.split(';') %}
+                        {% if seg.strip() and ':' in seg %}
+                            {% set kv = seg.split(':', 1) %}
+                            {% set label = exchange_map.get(kv[0], kv[0]) %}
+                            <div class="sp-tab-item">{{ label }}：{{ kv[1] }}</div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="sp-empty">暂无派生词数据。</div>
+                {% endif %}
+            </div>
+
+            {# Tab 面板：词根（暂无数据源）#}
+            <div class="sp-tab-panel" id="sp-panel-root">
+                <div class="sp-empty">暂无词根数据。</div>
+            </div>
+
+            {# Tab 面板：近义（暂无数据源）#}
+            <div class="sp-tab-panel" id="sp-panel-synonyms">
+                <div class="sp-empty">暂无近义词数据。</div>
+            </div>
+
+            {# Tab 面板：笔记（已保存笔记 + 添加笔记 + 已保存例句）#}
+            <div class="sp-tab-panel" id="sp-panel-notes">
+                {% if in_wordbook %}
+                    {# 已有笔记列表 #}
+                    <div id="notes-list">
+                        {% for note in notes %}
+                            <div class="sp-note-item">
+                                <span class="sp-note-time">{{ note.created_at.strftime('%Y-%m-%d %H:%M') if note.created_at.__class__.__name__ == 'datetime' else note.created_at }}</span>
+                                <p class="sp-note-content">{{ note.content }}</p>
+                                <form method="post" action="{{ url_for('words.delete_note', note_id=note.id) }}" class="inline-form">
+                                    <button type="submit" class="btn-small btn-danger-link">删除</button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {# 添加笔记 #}
+                    <div class="sp-note-input-row">
+                        <textarea id="note-input" class="sp-note-input" rows="2" placeholder="写点笔记：易混词、联想、记忆技巧..."></textarea>
+                        <button type="button" id="note-save" class="sp-btn-small">保存笔记</button>
+                    </div>
+
+                    {# 已保存的例句 #}
+                    <div class="sp-saved-examples">
+                        <div class="sp-saved-title">📚 已保存的例句 <a href="{{ url_for('words.examples') }}" class="link-small">查看全部 →</a></div>
+                        <div id="saved-examples-list">
+                            {% for ex in examples %}
+                                <div class="sp-saved-example-item">
+                                    <span class="sp-example-source">{{ ex.source }}</span>
+                                    <p class="sp-saved-example-text">{{ ex.sentence }}</p>
+                                    <form method="post" action="{{ url_for('words.delete_example', example_id=ex.id) }}" class="inline-form">
+                                        <button type="submit" class="btn-small btn-danger-link">删除</button>
+                                    </form>
+                                </div>
+                            {% endfor %}
+                            {% if not examples %}
+                                <p class="sp-empty">还没有保存的例句。选中上方任何文字，点浮出的按钮即可保存。</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="sp-empty">加入生词本后才能写笔记。</div>
+                {% endif %}
+            </div>
+
+        </div>{# /.sp-main #}
+
+        {# ============ 右侧 AI 卡片 ============ #}
+        <div class="sp-card sp-ai">
+            <div class="sp-ai-title">✨ AI 智能问答</div>
+
+            {# 对话记录区（max-height 400px，防撑爆）#}
+            <div id="chat-messages" class="sp-ai-history"></div>
+
+            {# 输入区 #}
+            <div class="sp-ai-input">
+                <input type="text" id="chat-input" class="sp-ai-input-field"
+                       placeholder="关于「{{ result.word }}」有什么想问的？" autocomplete="off">
+                <button type="button" id="chat-send" class="sp-ai-send-btn">发送</button>
+            </div>
+        </div>{# /.sp-ai #}
+
+    </div>{# /.sp-layout #}
+
+    {# ---- 底部居中"下一词"按钮（纯文字 + 小绿条）---- #}
+    <div class="sp-bottom-bar">
+        <button type="button" class="sp-next-btn" id="next-word-btn">下一词 →</button>
     </div>
-
-    {# ====== 智能问答对话框 ====== #}
-    {# 用户可以直接问大模型关于这个词的用法、场景、辨析等问题 #}
-    <div class="ai-chat">
-        <h3 class="ai-chat-title">💬 智能问答</h3>
-
-        {# 对话记录区 #}
-        <div id="chat-messages" class="chat-messages"></div>
-
-        {# 输入区 #}
-        <div class="chat-input-row">
-            <input type="text" id="chat-input" class="chat-input"
-                   placeholder="关于「{{ result.word }}」有什么想问的？" autocomplete="off">
-            <button type="button" id="chat-send" class="btn btn-chat-send">发送</button>
-        </div>
-    </div>
-</div>
+</div>{# /.search-page #}
 {% endif %}
 
 {# ====== 搜索了但没查到 ====== #}
@@ -212,138 +245,127 @@
 </div>
 {% endif %}
 
-{# ====== 智能问答对话框的交互逻辑 ====== #}
+{# ====== 交互脚本 ====== #}
 {% if result %}
 <script>
-// 当前查的单词，后端渲染时传进来
+// 当前单词 & word_id
 const CURRENT_WORD = "{{ result.word }}";
-const WORD_ID = {{ word_id or 'null' }};  // 该词在 words 表的 id（未加入生词本时为 null）
+const WORD_ID = {{ word_id or 'null' }};
 
-// 获取 DOM 元素
+// ============================================================
+// 1. Tab 切换
+// ============================================================
+document.querySelectorAll('.sp-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.sp-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.sp-tab-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('sp-panel-' + tab.dataset.tab).classList.add('active');
+    });
+});
+
+// ============================================================
+// 2. 星星按钮：加入/取消生词本（fetch 不刷新）
+// ============================================================
+const starBtn = document.getElementById('star-btn');
+if (starBtn) {
+    starBtn.addEventListener('click', async () => {
+        const isIn = starBtn.dataset.inWordbook === '1';
+        const word = starBtn.dataset.word;
+        starBtn.disabled = true;
+
+        try {
+            if (isIn) {
+                // 取消加入
+                const resp = await fetch(`/words/remove/${encodeURIComponent(word)}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                });
+                if (resp.ok) {
+                    starBtn.classList.remove('active');
+                    starBtn.textContent = '☆';
+                    starBtn.dataset.inWordbook = '0';
+                    starBtn.title = '点击加入生词本';
+                }
+            } else {
+                // 加入
+                const resp = await fetch('/words/add', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'word=' + encodeURIComponent(word),
+                });
+                if (resp.ok) {
+                    starBtn.classList.add('active');
+                    starBtn.textContent = '★';
+                    starBtn.dataset.inWordbook = '1';
+                    starBtn.title = '点击取消加入生词本';
+                    // 加入后刷新页面，让笔记区可用
+                    setTimeout(() => location.reload(), 600);
+                }
+            }
+        } catch (err) {
+            alert('操作失败：' + err.message);
+        } finally {
+            starBtn.disabled = false;
+        }
+    });
+}
+
+// ============================================================
+// 3. AI 问答
+// ============================================================
 const chatInput = document.getElementById("chat-input");
 const chatSend = document.getElementById("chat-send");
 const chatMessages = document.getElementById("chat-messages");
 
-// 往对话框里追加一条消息
 function appendMessage(role, text) {
     const div = document.createElement("div");
-    div.className = "chat-msg chat-msg-" + role;  // role: user / ai
+    div.className = "sp-msg sp-msg-" + role;
     div.textContent = text;
     chatMessages.appendChild(div);
-    // 滚动到底部
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// 发送问题
 async function sendQuestion() {
     const question = chatInput.value.trim();
     if (!question) return;
 
-    // 1. 显示用户的问题
     appendMessage("user", question);
     chatInput.value = "";
-    chatSend.disabled = true;  // 防止重复点击
+    chatSend.disabled = true;
 
-    // 2. 显示"正在思考..."
     const thinkingDiv = document.createElement("div");
-    thinkingDiv.className = "chat-msg chat-msg-ai chat-thinking";
+    thinkingDiv.className = "sp-msg sp-msg-ai";
     thinkingDiv.textContent = "正在思考...";
     chatMessages.appendChild(thinkingDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
     try {
-        // 3. 发请求给后端
         const resp = await fetch("{{ url_for('words.ask') }}", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                word: CURRENT_WORD,
-                question: question,
-            }),
+            body: JSON.stringify({ word: CURRENT_WORD, question: question }),
         });
         const data = await resp.json();
-
-        // 4. 替换"正在思考..."为实际回答
         thinkingDiv.textContent = data.answer;
-        thinkingDiv.classList.remove("chat-thinking");
-
     } catch (err) {
         thinkingDiv.textContent = "⚠️ 网络错误，请稍后重试。";
-        thinkingDiv.classList.remove("chat-thinking");
     } finally {
         chatSend.disabled = false;
         chatInput.focus();
     }
 }
 
-// 点击发送按钮
 chatSend.addEventListener("click", sendQuestion);
-
-// 按回车也能发送
 chatInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        e.preventDefault();
-        sendQuestion();
-    }
+    if (e.key === "Enter") { e.preventDefault(); sendQuestion(); }
 });
 
 // ============================================================
-// 生成固定搭配（调用 AI）
+// 4. 选中文字 → 浮出工具栏（存例句/存笔记）
 // ============================================================
-async function generateCollocations() {
-    const btn = document.getElementById("collocations-btn");
-    const resultDiv = document.getElementById("collocations-result");
-
-    btn.disabled = true;
-    btn.textContent = "生成中...";
-    resultDiv.innerHTML = '<p class="empty-hint">AI 正在生成搭配，请稍候...</p>';
-
-    try {
-        const resp = await fetch("{{ url_for('words.ask') }}", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                word: CURRENT_WORD,
-                question: `请给出单词"${CURRENT_WORD}"的4个最常见固定搭配，格式严格为：
-1. 搭配短语 - 中文意思
-2. 搭配短语 - 中文意思
-3. 搭配短语 - 中文意思
-4. 搭配短语 - 中文意思
-只输出这4行，不要其他解释。`,
-            }),
-        });
-        const data = await resp.json();
-
-        if (data.ok) {
-            // 把 AI 返回的每行解析成搭配项
-            const lines = data.answer.split("\n").filter(l => l.trim());
-            let html = '<ul class="collocation-list">';
-            lines.forEach(line => {
-                // 去掉开头的序号 "1. " "2. " 等
-                const clean = line.replace(/^\d+[\.\、\)]\s*/, "").trim();
-                if (clean) html += `<li>${clean}</li>`;
-            });
-            html += "</ul>";
-            resultDiv.innerHTML = html;
-        } else {
-            resultDiv.innerHTML = `<p class="error">${data.msg}</p>`;
-        }
-    } catch (err) {
-        resultDiv.innerHTML = '<p class="error">网络错误，请重试。</p>';
-    } finally {
-        btn.disabled = false;
-        btn.textContent = "重新生成";
-    }
-}
-
-// ============================================================
-// 选中文字 → 浮出工具栏
-// ============================================================
-// 只在该词已加入生词本（有 WORD_ID）时才启用这个功能
 if (WORD_ID) {
     const wordCard = document.querySelector(".word-card");
-
-    // 创建浮出的工具栏（含两个按钮：存例句 / 存笔记），默认隐藏
     const toolbar = document.createElement("div");
     toolbar.className = "floating-toolbar";
     toolbar.style.display = "none";
@@ -354,16 +376,13 @@ if (WORD_ID) {
     document.body.appendChild(toolbar);
     let selectedText = "";
 
-    // 监听鼠标松开：如果有选中的文字，显示工具栏
     document.addEventListener("mouseup", () => {
         const sel = window.getSelection();
         const text = sel.toString().trim();
-
         if (text && wordCard && wordCard.contains(sel.anchorNode)) {
             const range = sel.getRangeAt(0);
             const rect = range.getBoundingClientRect();
             selectedText = text;
-            // 工具栏宽度约 150px，居中显示在选中文字上方
             toolbar.style.left = (rect.left + rect.width / 2 - 75) + "px";
             toolbar.style.top = (rect.top + window.scrollY - 40) + "px";
             toolbar.style.display = "flex";
@@ -372,7 +391,6 @@ if (WORD_ID) {
         }
     });
 
-    // 点击页面其他地方时隐藏工具栏
     document.addEventListener("mousedown", (e) => {
         if (!toolbar.contains(e.target)) {
             setTimeout(() => {
@@ -381,18 +399,15 @@ if (WORD_ID) {
         }
     });
 
-    // 工具栏内任意按钮点击
     toolbar.addEventListener("click", async (e) => {
         const btn = e.target.closest(".floating-btn");
         if (!btn || !selectedText) return;
-
         const action = btn.dataset.action;
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = "保存中...";
 
         if (action === "example") {
-            // 保存到例句库
             const resp = await fetch("{{ url_for('words.save_example') }}", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
@@ -401,7 +416,6 @@ if (WORD_ID) {
             const data = await resp.json();
             btn.textContent = data.ok ? "✅ " + data.msg : "⚠️ " + data.msg;
         } else if (action === "note") {
-            // 保存到笔记
             const resp = await fetch("{{ url_for('words.save_note') }}", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
@@ -421,7 +435,7 @@ if (WORD_ID) {
 }
 
 // ============================================================
-// 保存笔记
+// 5. 保存笔记
 // ============================================================
 const noteInput = document.getElementById("note-input");
 const noteSave = document.getElementById("note-save");
@@ -429,7 +443,6 @@ if (noteSave && WORD_ID) {
     noteSave.addEventListener("click", async () => {
         const content = noteInput.value.trim();
         if (!content) return;
-
         noteSave.disabled = true;
         const resp = await fetch("{{ url_for('words.save_note') }}", {
             method: "POST",
@@ -437,14 +450,316 @@ if (noteSave && WORD_ID) {
             body: JSON.stringify({word_id: WORD_ID, content: content}),
         });
         const data = await resp.json();
-
         if (data.ok) {
             noteInput.value = "";
-            location.reload();  // 刷新显示新笔记
+            location.reload();
         } else {
             alert(data.msg);
             noteSave.disabled = false;
         }
+    });
+}
+
+// ============================================================
+// 6. "下一词"按钮：随机跳一个常见词
+// ============================================================
+const COMMON_WORDS = [
+    "abandon","ability","absolute","accept","achieve","acquire","adapt","adequate",
+    "adjust","admire","admit","advance","advocate","affect","afford","agency",
+    "agenda","aggressive","allocate","alternative","ambition","analyze","ancient",
+    "annual","anticipate","apparent","approach","appropriate","approximate","arbitrary",
+    "architect","arrange","articulate","aspect","assess","assign","associate",
+    "assume","attain","attempt","attribute","authority","available","aware",
+    "balance","barrier","behalf","benefit","boundary","brief","budget","calculate",
+    "capacity","category","cease","challenge","circumstance","civil","clarify",
+    "classic","client","coherent","collapse","commence","commission","commit",
+    "commodity","community","compare","compatible","compensate","compile","complex",
+    "component","compose","comprehensive","comprise","compromise","conceive",
+    "concentrate","concept","conclude","concrete","condemn","conduct","confer",
+    "confine","confirm","conflict","conform","confront","confuse","congress",
+    "conjunction","consecutive","consensus","consequence","conservative","consider",
+    "consist","constant","constitute","construct","consult","consume","contact",
+    "contemporary","contempt","contend","context","contract","contradict",
+    "contrary","contrast","contribute","controversy","convention","convert",
+    "convey","convict","cooperate","coordinate","cope","core","corporate",
+    "correspond","council","counterpart","courage","create","credit","criteria",
+    "crucial","cultivate","currency","current","cycle","debate","decade","decide",
+    "decline","dedicate","deduce","define","definite","deliberate","delicate",
+    "demonstrate","deny","depart","depend","depict","derive","describe","design",
+    "desire","despite","destiny","destroy","detect","determine","develop","devote",
+    "differentiate","dimension","diminish","direct","discipline","disclose",
+    "discover","discrimination","discuss","displace","display","dispose","dispute",
+    "distinct","distinguish","distribute","disturb","diverse","doctrine","domain",
+    "domestic","dominate","draft","drama","dramatic","duration","dynamic","economy",
+    "edit","educate","effect","efficient","elaborate","element","eliminate",
+    "emerge","emphasis","employ","enable","encounter","encourage","endure",
+    "enhance","enormous","ensure","entail","entire","entitle","environment",
+    "equate","equip","equivalent","eradicate","essential","establish","estimate",
+    "ethic","evaluate","eventually","evidence","evolve","examine","exceed",
+    "excel","except","exchange","exclude","execute","exercise","exhibit",
+    "exile","exist","expand","expect","expense","experience","experiment",
+    "expert","explain","explicit","exploit","explore","export","expose","express",
+    "extend","extensive","external","extinct","extraordinary","extreme","facilitate",
+    "factor","faculty","fade","fail","familiar","famous","fancy","fantastic",
+    "fascinate","fashion","fatal","favor","fear","feature","federal","fee",
+    "feedback","feeling","fiction","figure","finance","finite","firm","fiscal",
+    "flexible","flight","float","flock","flourish","flow","fluctuate","focus",
+    "forbid","force","forecast","foreign","forest","forever","forgive","formal",
+    "format","former","formula","forth","fortune","forum","foundation","found",
+    "fraction","fragment","frame","framework","frank","fraud","free","frequent",
+    "fresh","friend","frighten","frontier","frown","fruitful","fulfill","function",
+    "fundamental","fund","furious","further","future","gain","gallery","game",
+    "gap","garbage","garden","gather","gaze","general","generate","generous",
+    "genius","gentle","genuine","gesture","get","giant","gift","gigantic",
+    "glance","glimpse","globe","gloomy","glorious","glory","glove","glow",
+    "glue","goal","govern","grab","grace","gradual","graduate","grain","grand",
+    "grant","grasp","grass","grateful","grave","gravity","great","greedy",
+    "green","greet","grid","grief","grin","grip","grocery","ground","group",
+    "grow","guarantee","guard","guess","guest","guidance","guide","guilty",
+    "guitar","gulf","gum","gun","habit","hail","hair","halt","hammer","hand",
+    "handle","handsome","hang","happen","happy","harbor","hard","harm","harsh",
+    "harvest","haste","hat","hate","haul","have","hawk","hazard","head","heal",
+    "health","heap","hear","heart","heat","heaven","heavy","hedge","heel",
+    "height","heir","helicopter","hell","hello","helmet","help","hemisphere",
+    "hence","herb","herd","here","heritage","hero","hesitate","hide","high",
+    "highway","hike","hill","hint","hire","historian","historic","history",
+    "hit","hobby","hold","hole","holiday","hollow","home","honest","honor",
+    "hook","hope","horizon","horror","horse","hospital","host","hostile",
+    "hotel","hour","house","household","hover","however","huge","human","humble",
+    "humor","hundred","hungry","hunt","hurry","hurt","husband","hut","hydrogen",
+    "hypothesis","ice","idea","identical","identify","ideology","idiot","idle",
+    "ignorance","ignorant","ignore","ill","illegal","illness","illuminate",
+    "illustrate","image","imagine","imitate","immediate","immense","immune",
+    "impact","impair","impart","implement","implication","imply","import",
+    "impose","impossible","impress","improve","impulse","incentive","incident",
+    "include","income","incorporate","increase","incredible","independence",
+    "index","indicate","indigenous","individual","induce","industrial","industry",
+    "inevitable","infect","infer","influence","inform","ingredient","inhabit",
+    "inherent","inherit","inhibit","initial","initiate","injure","injury",
+    "inland","inn","inner","innocent","innovate","input","inquire","insane",
+    "insect","insert","inside","insight","insist","inspect","inspire","install",
+    "instance","instant","instinct","institute","instruct","instrument","insult",
+    "insurance","insure","integrate","integrity","intellectual","intelligence",
+    "intend","intense","intensify","intention","interact","interest","interface",
+    "interfere","interior","intermediate","internal","interpret","interrupt",
+    "interval","intervene","interview","intimate","introduce","invade","invent",
+    "inventory","invest","investigate","investor","invite","involve","iron",
+    "island","isolate","issue","item","ivory","jacket","jail","jam","january",
+    "japan","jar","jazz","jealous","jeans","jelly","jewel","job","jog","join",
+    "joint","joke","journalist","journey","joy","judge","judgment","juice",
+    "july","jump","june","jungle","junior","jury","justice","justify","keen",
+    "keep","kettle","key","keyboard","kick","kid","kidney","kill","kilogram",
+    "kilometer","kind","king","kingdom","kiss","kit","kitchen","knee","kneel",
+    "knife","knock","know","knowledge","lab","label","labor","lack","ladder",
+    "lady","lake","lamb","lame","lamp","land","landscape","language","laptop",
+    "large","laser","last","late","later","latter","laugh","launch","laundry",
+    "lava","law","lawn","lawsuit","lawyer","lay","layer","lazy","lead","leader",
+    "leadership","leaf","league","lean","learn","least","leather","leave",
+    "lecture","left","leg","legacy","legal","legend","legislation","leisure",
+    "lend","length","lens","less","lesson","let","letter","level","liberal",
+    "library","license","lie","life","lift","light","lightning","like","limb",
+    "limit","limitation","limp","line","link","lion","lip","liquid","list",
+    "listen","literature","litre","litter","little","live","lively","liver",
+    "living","load","loaf","loan","lobby","local","locate","location","lock",
+    "log","logic","lonely","long","look","loop","loose","lose","loss","lot",
+    "loud","lounge","love","low","loyal","luck","lucky","lunch","lung","luxury",
+    "machine","mad","magazine","magic","magnetic","maid","mail","main","maintain",
+    "major","majority","make","male","mall","man","manage","management","manager",
+    "mandate","manner","manufacture","many","map","march","margin","marine",
+    "mark","market","marriage","marry","mask","mass","master","match","material",
+    "matter","maximum","may","maybe","mayor","me","meadow","meal","mean","meaning",
+    "measure","meat","mechanic","mechanism","medical","medicine","medieval",
+    "medium","meet","meeting","melody","melt","member","memory","mental","mention",
+    "menu","merchant","mercy","merge","merit","merry","mess","message","metal",
+    "method","middle","midnight","might","mild","mile","military","milk","million",
+    "mimic","mind","mine","minister","minor","minority","minute","miracle",
+    "mirror","miss","mission","mistake","mix","mixture","mobile","mode","model",
+    "modify","mom","moment","monarch","money","monitor","monkey","month","moon",
+    "moral","more","morning","mosquito","mother","motion","motivate","motor",
+    "mountain","mouse","mouth","move","movement","movie","much","mud","museum",
+    "mushroom","music","musical","musician","must","mutual","myself","mystery",
+    "myth","name","narrow","nation","national","native","natural","nature",
+    "naval","near","nearby","nearly","necessary","neck","need","negative",
+    "neglect","negotiate","neighbor","neighborhood","neither","nephew","nerve",
+    "nest","net","network","neutral","never","new","news","newspaper","next",
+    "nice","night","nine","no","noble","nobody","nod","noise","nominate","none",
+    "nonsense","noon","nor","normal","north","nose","not","note","nothing",
+    "notice","notion","novel","now","nowhere","nuclear","number","numerous",
+    "nurse","nut","nutrition","object","oblige","obscure","observation","observe",
+    "obtain","obvious","occasion","occupy","occur","ocean","odd","of","off",
+    "offense","offer","office","officer","official","often","oil","old","olive",
+    "olympic","omit","once","one","onion","online","only","onto","open","opera",
+    "operate","operation","operator","opinion","opponent","opportunity","oppose",
+    "opposite","oppress","opt","optimistic","option","or","orange","orbit","orchestra",
+    "order","ordinary","organ","organic","organize","origin","original","originate",
+    "orphan","ostrich","other","ought","our","ours","ourselves","out","outdoor",
+    "outer","outline","output","outside","oval","oven","over","overall","overcome",
+    "overlook","owe","own","owner","oxygen","oyster","pace","pack","package","page",
+    "pain","painful","paint","pair","palace","pale","palm","pamphlet","pan","pancake",
+    "panel","panic","panorama","pant","paper","paragraph","parallel","paralyze",
+    "parcel","parent","park","parliament","part","participate","particular","partly",
+    "partner","party","pass","passage","passenger","passion","passive","passport",
+    "past","path","patient","patience","patriotic","patrol","patron","pattern",
+    "pause","pave","payment","peace","peaceful","peak","peasant","peculiar","pedestrian",
+    "peer","pen","penalty","pencil","peninsula","penny","pension","people","pepper",
+    "per","perceive","percent","perfect","perform","performance","perhaps","period",
+    "permanent","permit","person","personal","personality","personnel","perspective",
+    "persuade","pertain","pertinent","pervade","pessimistic","pet","petition","petty",
+    "phase","phenomenon","philosophy","phone","photo","photograph","phrase","physical",
+    "physician","physicist","physics","piano","pick","picnic","picture","pie","piece",
+    "pierce","pigeon","pile","pill","pillar","pilot","pin","pinch","pine","pink",
+    "pioneer","pipe","pistol","pitch","pity","place","plain","plan","plane","planet",
+    "plant","plastic","plate","platform","play","please","pleasure","pledge","plenty",
+    "plot","plow","plug","plunge","poem","poet","poetry","point","poison","pole",
+    "police","policy","polish","polite","political","politician","politics","poll",
+    "pollute","pollution","pond","pony","pool","poor","pop","popular","population",
+    "porch","porridge","port","portable","portion","portrait","portray","pose",
+    "position","positive","possess","possession","possible","possibly","post","poster",
+    "postman","postpone","pot","potato","potential","pound","pour","poverty","powder",
+    "power","powerful","practical","practice","practise","praise","pray","preach",
+    "precede","precedent","precious","precise","predict","predominant","prefer",
+    "preference","pregnant","prejudice","preliminary","premise","preparation","prepare",
+    "prescribe","presence","present","presentation","preserve","president","press",
+    "pressure","prestige","presume","pretend","pretty","prevail","prevent","previous",
+    "prey","price","pride","priest","primary","prime","primitive","prince","princess",
+    "principal","principle","print","prior","priority","prison","prisoner","privacy",
+    "private","privilege","prize","probability","probable","probably","problem","procedure",
+    "proceed","process","produce","producer","product","production","productive","profession",
+    "professional","professor","profit","profitable","program","progress","progressive",
+    "prohibit","project","prominent","promise","promote","prompt","pronounce","proof",
+    "proper","property","proportion","propose","prosecute","prospect","prosper","protect",
+    "protection","protein","protest","prototype","proud","prove","provide","province",
+    "provision","provoke","psychological","psychology","public","publication","publicity",
+    "publish","pudding","pull","pulp","pulse","pumpkin","punch","punish","punishment",
+    "pupil","puppet","purchase","pure","purify","purple","purpose","purse","pursue",
+    "push","put","puzzle","pyramid","quality","quantity","quarrel","quarter","queen",
+    "question","quick","quiet","quit","quite","quota","quote","rabbit","race","rack",
+    "radar","radio","rage","raid","rail","railroad","rain","raise","rally","ramp",
+    "ranch","random","range","rank","rapid","rare","rarely","rate","rather","ratio",
+    "raw","ray","reach","react","reaction","read","reader","readily","reading","ready",
+    "real","reality","realize","really","reason","reasonable","rebel","recall","receive",
+    "recent","recently","reception","recession","recipe","recipient","recite","reckon",
+    "recognize","recommend","reconcile","record","recover","recovery","recreate","red",
+    "reduce","reduction","refer","reference","reflect","reflection","reform","refresh",
+    "refugee","refuse","regard","regarding","regime","region","register","regret",
+    "regular","regulate","regulation","rehearsal","reign","reinforce","reject","rejoice",
+    "relate","relation","relationship","relative","relatively","relax","release","relevant",
+    "relief","relieve","religion","religious","rely","remain","remarkable","remedy",
+    "remember","remind","remote","remove","renew","renowned","rent","repair","repeat",
+    "repeatedly","replace","reply","report","reporter","represent","representative",
+    "reputation","request","require","requirement","rescue","research","researcher",
+    "resemble","reservation","reserve","reside","residence","resident","residential",
+    "resign","resist","resistance","resolution","resolve","resort","resource","respect",
+    "respond","response","responsibility","responsible","rest","restaurant","restore",
+    "restrict","restriction","result","resume","retain","retire","retirement","retreat",
+    "return","reveal","revenue","review","revolution","revolutionary","reward","rhythm",
+    "ribbon","rice","rich","rid","ride","ridge","rifle","right","rigid","ring","riot",
+    "ripe","rise","risk","ritual","rival","river","road","roar","roast","rob","robot",
+    "robust","rock","rocket","role","roll","romance","romantic","roof","room","rookie",
+    "roof","root","rope","rose","rotate","rough","round","route","routine","row","royal",
+    "rub","rubber","rude","rug","ruin","rule","ruler","rumor","run","rural","rush","sad",
+    "safe","safety","sail","sake","salad","salary","sale","salesman","salt","salute",
+    "same","sample","sanction","sand","satellite","satisfaction","satisfy","sauce",
+    "sausage","save","say","scale","scan","scandal","scarce","scare","scatter","scene",
+    "schedule","scheme","scholar","scholarship","school","science","scientific",
+    "scientist","scope","score","scorn","scout","scrap","screen","script","sculpture",
+    "sea","search","season","seat","second","secondary","secret","secretary","section",
+    "sector","secure","security","see","seed","seek","seem","segment","select","selection",
+    "self","sell","semester","semiconductor","senate","senator","send","senior","sense",
+    "sensitive","sentence","separate","sequence","series","serious","servant","serve",
+    "service","session","set","settle","settlement","seven","several","severe","sew","sex",
+    "shade","shadow","shake","shall","shallow","shame","shape","share","sharp","she",
+    "sheep","sheet","shelf","shell","shelter","shift","shine","ship","shirt","shock",
+    "shoe","shoot","shop","shore","short","shot","should","shoulder","shout","show",
+    "shower","shut","sick","side","sidewalk","siege","sight","sign","signal","signature",
+    "significance","significant","signify","silence","silent","silk","silly","silver",
+    "similar","simple","simplicity","simplify","simply","since","sing","singer","single",
+    "sink","sir","sister","sit","site","situation","six","size","skill","skilled","skillful",
+    "skin","skirt","skull","sky","slab","slam","sleep","slice","slide","slight","slim",
+    "slip","slippery","slit","slow","small","smart","smell","smile","smoke","smooth",
+    "snake","snap","snarl","sneak","sniff","snow","so","soak","soap","sob","soccer",
+    "social","society","sociology","sock","soda","soft","software","soil","solar","soldier",
+    "solid","solution","solve","some","somebody","somehow","someone","something","sometimes",
+    "somewhat","somewhere","son","song","soon","sore","sorrow","sorry","sort","soul",
+    "sound","soup","source","south","space","spare","speak","speaker","spear","special",
+    "specialist","species","specific","specifically","specify","spectacle","spectator",
+    "spectrum","speculate","speech","speed","spell","spend","sphere","spice","spider",
+    "spill","spin","spine","spirit","spiritual","spite","splash","split","spoil","spoke",
+    "spokesman","sponge","sponsor","spontaneous","spoon","sport","spot","spray","spread",
+    "spring","sprinkle","spy","square","squeeze","squirrel","stable","stadium","staff",
+    "stage","stain","stair","stake","stale","stalk","stall","stamp","stand","standard",
+    "stare","start","starve","state","statement","statesman","static","station","statue",
+    "status","stay","steady","steal","steam","steel","steep","steer","stem","step",
+    "stereo","stick","sticky","stiff","still","stimulate","sting","stir","stitch","stock",
+    "stomach","stone","stop","storage","store","storm","story","stove","straight","strange",
+    "strap","strategy","straw","stream","street","strength","stress","stretch","strike",
+    "string","strip","stripe","stroke","strong","structure","struggle","student","studio",
+    "study","stuff","stumble","style","subject","subjective","submit","subsequent","substance",
+    "substantial","substitute","subtle","suburb","succeed","success","successful","such",
+    "sudden","suffer","sugar","suggest","suggestion","suicide","suit","suitable","sum",
+    "summary","summer","summit","sun","super","superficial","superior","supermarket",
+    "supervise","supper","supplement","supply","support","suppose","suppress","sure","surface",
+    "surge","surgeon","surgery","surplus","surprise","surprising","surrender","surround",
+    "survey","survive","survivor","suspect","suspend","suspicion","suspicious","sustain",
+    "swallow","swamp","swan","swap","swarm","swear","sweat","sweater","sweep","sweet",
+    "swell","swim","swing","switch","sword","symbol","sympathy","symptom","syndrome",
+    "synthesis","systematic","table","tablespoon","tactic","tail","tailor","take","tale",
+    "talent","talk","tall","tame","tan","tank","tap","tape","target","task","taste","tax",
+    "taxi","tea","teach","teacher","team","tear","technical","technique","technology","teenager",
+    "telephone","telescope","television","tell","temperature","temple","temporary","ten",
+    "tenant","tend","tendency","tender","tennis","tense","tension","tent","term","terminal",
+    "terminate","terms","terrace","terrain","terrible","territory","terror","test","testify",
+    "testimony","testing","text","textbook","texture","than","thank","that","theater","theft",
+    "their","them","theme","themselves","then","theory","there","therefore","these","they",
+    "thick","thief","thin","thing","think","third","thirst","thirteen","thirty","this","thorn",
+    "those","though","thought","thousand","thread","threat","threaten","three","threshold",
+    "thrive","throw","thrust","thumb","thunder","thus","ticket","tide","tidy","tie","tiger",
+    "tight","tighten","tile","till","tilt","timber","time","timetable","timid","tin","tiny",
+    "tip","tire","tired","tissue","title","to","tobacco","today","toddler","toe","together",
+    "toilet","token","tomato","tomorrow","tone","tongue","tonight","tool","tooth","top","topic",
+    "torch","tornado","tortoise","torture","toss","total","touch","tough","tour","tourism",
+    "tourist","tournament","toward","towards","towel","tower","town","toxic","toy","trace",
+    "track","tractor","trade","tradition","traditional","traffic","tragedy","trail","train",
+    "training","transfer","transform","transition","translate","transmission","transmit","transparent",
+    "transport","transportation","trap","trash","travel","tray","treat","treatment","treaty",
+    "tree","tremble","trend","trial","tribe","trick","trigger","trim","trip","triumph","trolley",
+    "troop","trouble","truck","true","truly","trumpet","trust","truth","try","tube","tuck",
+    "tuesday","tuition","tumble","tune","tunnel","turkey","turn","turtle","twelve","twenty",
+    "twice","twin","twist","two","type","typical","ugly","umbrella","unable","unaware","uncle",
+    "under","undergo","undergraduate","underground","underline","underlying","undermine","understand",
+    "understanding","understate","undertook","underwear","unemployment","unexpected","unfair",
+    "unfold","unfortunate","unfortunately","unhappy","uniform","unify","union","unique","unit",
+    "unite","unity","universal","universe","university","unknown","unless","unlike","unlikely",
+    "unload","unlock","until","unusual","unveil","update","upgrade","uphold","upon","upper",
+    "upright","uproar","upset","upside","urban","urge","urgent","usage","use","used","useful",
+    "useless","user","usual","usually","utility","utmost","vacant","vacation","vaccine","vacuum",
+    "vague","vain","valid","valley","valuable","value","valve","van","vanish","vapor","various",
+    "vary","vase","vast","vault","vector","vegetable","vehicle","veil","vein","velocity","velvet",
+    "vendor","venture","venue","verb","verbal","verdict","verify","versus","version","vessel",
+    "veteran","viable","vibrant","vibrate","vice","victim","victory","video","view","viewer",
+    "village","violate","violence","violent","violet","violin","virgin","virtual","virtue",
+    "virus","visible","vision","visit","visitor","visual","vital","vitamin","vivid","vocabulary",
+    "vocal","vogue","voice","void","volcano","volume","voluntary","volunteer","vote","voucher",
+    "vowel","voyage","vulnerable","wage","waist","wait","waiter","wake","walk","wall","wallet",
+    "wander","want","war","ward","warehouse","warfare","warm","warmth","warn","warrant","warrior",
+    "wash","wasp","waste","watch","water","waterfall","watt","wave","wavelength","wax","way","we",
+    "weak","wealth","weapon","wear","weary","weather","weave","wedding","wedge","wednesday","weed",
+    "week","weekday","weekend","weep","weigh","weight","weird","welcome","welfare","well","west",
+    "western","wet","whale","what","wheat","wheel","when","where","whether","which","while","whisper",
+    "whistle","white","who","whole","wholesale","whom","whose","why","wicked","wide","widely","widespread",
+    "widow","width","wife","wild","will","willing","win","wind","window","wine","wing","wink","winner",
+    "winter","wipe","wire","wisdom","wise","wish","wit","with","withdraw","withdraw","within","without",
+    "witness","wolf","woman","wonder","wood","wooden","wool","word","work","worker","workshop","world",
+    "worry","worse","worship","worst","worth","worthwhile","worthy","would","wound","wrap","wrist","write",
+    "writer","writing","written","wrong","yard","yarn","year","yellow","yes","yesterday","yet","yield",
+    "you","young","your","yourself","youth","zeal","zebra","zero","zone","zoo"
+];
+
+const nextBtn = document.getElementById('next-word-btn');
+if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+        const random = COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)];
+        window.location.href = "{{ url_for('words.search') }}?q=" + encodeURIComponent(random);
     });
 }
 </script>

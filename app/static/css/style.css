@@ -11,25 +11,28 @@
 body {
     margin: 0;
     font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
-    background-color: #f5f6f8;
-    color: #222;
+    background-color: #DDDCEE;  /* 全局淡紫灰背景，与查词页统一 */
+    color: #1E293B;
     line-height: 1.6;
 }
 
-/* 顶部导航栏 */
+/* 顶部导航栏：半透明白毛玻璃风格 */
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    background-color: #ffffff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 1px 4px rgba(30, 41, 59, 0.06);
 }
 
 .navbar .brand {
     font-size: 18px;
     font-weight: bold;
-    color: #2b7de9;
+    color: #4338CA;
     text-decoration: none;
 }
 
@@ -40,14 +43,30 @@ body {
 }
 
 .nav-links a:hover {
-    color: #2b7de9;
+    color: #4338CA;
 }
 
-/* 页面主体内容区：限制最大宽度并居中 */
+/* 页面主体内容区：限制最大宽度并居中（从 720px 放宽到 1200px） */
 .container {
-    max-width: 720px;
+    max-width: 1200px;
     margin: 24px auto;
     padding: 0 16px;
+}
+
+/* ====== 全局毛玻璃卡片主题 ======
+   统一所有白色卡片：半透明白 + backdrop-filter 模糊 + 圆角 16px + 柔和阴影，去掉硬边框。
+   用 !important 覆盖各卡片原本的白底/灰边，确保全局一致。
+   按钮类（.btn-outline / .rate-btn / .judge-btn 等）不在此列，保持原有交互样式。 */
+.word-card, .home-card, .home-feature, .note-item, .stat-card,
+.word-item, .settings-section, .form-container, .review-stats,
+.mc-card, .spelling-box, .judge-card, .reveal-card, .recall-card,
+.saved-example-item, .word-list .word-item {
+    background: rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(30, 41, 59, 0.12) !important;
 }
 
 /* ========== 表单样式 ========== */
@@ -72,7 +91,7 @@ body {
 }
 
 .form-group input:focus {
-    border-color: #2b7de9;
+    border-color: #4338CA;
     outline: none;
 }
 
@@ -80,7 +99,7 @@ body {
 .btn {
     width: 100%;
     padding: 10px;
-    background-color: #2b7de9;
+    background-color: #4338CA;
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -89,7 +108,7 @@ body {
 }
 
 .btn:hover {
-    background-color: #1a6dd4;
+    background-color: #3730a3;
 }
 
 /* 错误消息（红色文字） */
@@ -119,7 +138,7 @@ body {
 }
 
 .search-input:focus {
-    border-color: #2b7de9;
+    border-color: #4338CA;
     outline: none;
 }
 
@@ -134,6 +153,37 @@ body {
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* 桌面端 Grid 双栏布局：左主内容 2fr，右交互区 1fr */
+.word-card-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    align-items: start;  /* 左右两栏高度独立，不被对方撑高 */
+}
+
+/* 左侧主内容区：单词、音标、标签、释义、例句 */
+.word-main { min-width: 0; }
+
+/* 右侧交互区：加生词本按钮、笔记、搭配、AI 问答 */
+.word-aside {
+    min-width: 0;
+    padding-left: 20px;
+    border-left: 1px solid #f0f0f0;  /* 细分割线，区分左右栏 */
+}
+
+/* 移动端适配：宽度 < 768px 时折叠为单列，回归原布局 */
+@media (max-width: 768px) {
+    .word-card-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    /* 右侧栏去掉左侧分割线和内边距，单列时不需要视觉分割 */
+    .word-aside {
+        padding-left: 0;
+        border-left: none;
+    }
 }
 
 /* 单词标题行：单词 + 音标 */
@@ -236,13 +286,14 @@ body {
     margin-bottom: 16px;
 }
 
+/* 标签：圆角药丸形，颜色更淡，不抢眼 */
 .tag {
     display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    background-color: #eef1f5;
-    color: #555;
+    padding: 2px 10px;
+    border-radius: 12px;  /* 药丸形圆角 */
+    font-size: 11px;
+    background-color: #f3f5f8;
+    color: #888;
 }
 
 /* 不同类型标签用不同颜色区分 */
@@ -271,12 +322,13 @@ body {
     margin-bottom: 16px;
 }
 
+/* 标题：去掉蓝色竖线，改用底部细线分割，更柔和 */
 .section h3 {
     font-size: 15px;
     color: #666;
     margin: 0 0 8px 0;
-    border-left: 3px solid #2b7de9;
-    padding-left: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #eee;
 }
 
 .meaning-line {
@@ -291,7 +343,7 @@ body {
     font-size: 11px;
     font-weight: normal;
     color: #fff;
-    background-color: #2b7de9;
+    background-color: #4338CA;
     padding: 2px 8px;
     border-radius: 10px;
     vertical-align: middle;
@@ -319,7 +371,7 @@ body {
 }
 
 .btn-add {
-    background-color: #2b7de9;
+    background-color: #4338CA;
 }
 
 .btn-added {
@@ -440,7 +492,7 @@ body {
 
 /* 对话记录区 */
 .chat-messages {
-    max-height: 300px;
+    max-height: 400px;  /* 对话过长也不会撑爆右侧栏，可滚动 */
     overflow-y: auto;
     margin-bottom: 12px;
     display: flex;
@@ -462,7 +514,7 @@ body {
 /* 用户消息：靠右，蓝色背景 */
 .chat-msg-user {
     align-self: flex-end;
-    background-color: #2b7de9;
+    background-color: #4338CA;
     color: #fff;
     border-bottom-right-radius: 4px;
 }
@@ -502,7 +554,7 @@ body {
 }
 
 .chat-input:focus {
-    border-color: #2b7de9;
+    border-color: #4338CA;
     outline: none;
 }
 
@@ -523,7 +575,7 @@ body {
     z-index: 9999;
     display: flex;
     gap: 4px;
-    background-color: #2b7de9;
+    background-color: #4338CA;
     border-radius: 6px;
     padding: 3px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -594,7 +646,7 @@ body {
 }
 
 .note-input:focus {
-    border-color: #2b7de9;
+    border-color: #4338CA;
     outline: none;
 }
 
@@ -645,7 +697,7 @@ body {
 /* 小链接 */
 .link-small {
     font-size: 12px;
-    color: #2b7de9;
+    color: #4338CA;
     text-decoration: none;
     font-weight: normal;
 }
@@ -658,7 +710,7 @@ body {
 .word-text-link {
     font-size: 16px;
     font-weight: bold;
-    color: #2b7de9;
+    color: #4338CA;
     text-decoration: none;
 }
 
@@ -697,7 +749,7 @@ body {
 .collocation-list li {
     padding: 8px 12px;
     background-color: #f0f7ff;
-    border-left: 3px solid #2b7de9;
+    border-left: 3px solid #4338CA;
     border-radius: 4px;
     margin-bottom: 6px;
     font-size: 14px;
@@ -707,8 +759,8 @@ body {
 /* 描边按钮（生成搭配用） */
 .btn-outline {
     background-color: #fff;
-    color: #2b7de9;
-    border: 1px solid #2b7de9;
+    color: #4338CA;
+    border: 1px solid #4338CA;
 }
 
 .btn-outline:hover {
@@ -775,7 +827,7 @@ body {
 .btn-primary {
     display: inline-block;
     text-decoration: none;
-    background-color: #2b7de9;
+    background-color: #4338CA;
     color: #fff;
     padding: 14px 40px;
     font-size: 18px;
@@ -784,7 +836,7 @@ body {
 }
 
 .btn-primary:hover {
-    background-color: #1a6dd4;
+    background-color: #3730a3;
     color: #fff;
 }
 
@@ -804,7 +856,7 @@ body {
 }
 
 .session-progress a {
-    color: #2b7de9;
+    color: #4338CA;
     text-decoration: none;
     font-size: 14px;
 }
@@ -1027,7 +1079,7 @@ body {
 }
 
 .reveal-pos {
-    color: #2b7de9;
+    color: #4338CA;
     font-weight: 600;
     margin-right: 6px;
     font-size: 15px;
@@ -1102,7 +1154,7 @@ body {
 }
 
 .mc-show-answer {
-    color: #2b7de9;
+    color: #4338CA;
     text-decoration: underline;
     cursor: pointer;
 }
@@ -1153,7 +1205,7 @@ body {
     color: #333;
 }
 .mc-option:hover {
-    border-color: #2b7de9;
+    border-color: #4338CA;
     background: #f0f5ff;
 }
 
@@ -1254,7 +1306,7 @@ body {
     padding: 12px 16px;
     background-color: #f0f7ff;
     border-radius: 8px;
-    border-left: 3px solid #2b7de9;
+    border-left: 3px solid #4338CA;
 }
 
 .recall-collins-text {
@@ -1285,7 +1337,7 @@ body {
 }
 
 .done-stats strong {
-    color: #2b7de9;
+    color: #4338CA;
     font-size: 20px;
 }
 
@@ -1369,7 +1421,7 @@ body {
 }
 
 .dict-link a {
-    color: #2b7de9;
+    color: #4338CA;
     text-decoration: none;
     font-size: 13px;
 }
@@ -1431,11 +1483,11 @@ body {
 }
 
 .count-option:hover {
-    border-color: #2b7de9;
+    border-color: #4338CA;
 }
 
 .count-option:has(input:checked) {
-    border-color: #2b7de9;
+    border-color: #4338CA;
     background-color: #e8f1fd;
 }
 
@@ -1518,8 +1570,8 @@ body {
 /* 轮廓按钮（提示按钮用） */
 .btn-outline {
     background-color: #fff;
-    color: #2b7de9;
-    border: 1px solid #2b7de9;
+    color: #4338CA;
+    border: 1px solid #4338CA;
     padding: 10px 16px;
     border-radius: 6px;
     font-size: 14px;
@@ -1586,7 +1638,7 @@ body {
     color: #555;
 }
 .correct-word-display {
-    color: #2b7de9;
+    color: #4338CA;
     font-size: 22px;
     font-family: "Courier New", monospace;
     letter-spacing: 1px;
@@ -1604,7 +1656,7 @@ body {
 }
 
 .score strong {
-    color: #2b7de9;
+    color: #4338CA;
     font-size: 24px;
 }
 
@@ -1683,4 +1735,384 @@ body {
     .word-display {
         font-size: 36px;
     }
+}
+
+/* ============================================================
+   查词页重构样式（参考 search_page_demo.html）
+   所有类名以 sp- 前缀，避免与全局样式冲突
+   ============================================================ */
+
+/* 查词页：full-bleed 突破 .container 的 max-width:720px 限制，铺满整个视口宽度
+   margin-inline: calc(50% - 50vw) 是全出血技巧：让元素水平方向扩展到视口边缘，
+   不受父容器 .container 的 720px 宽度约束。背景色 #DDDCEE 覆盖整个页面宽度。 */
+.search-page {
+    background-color: #DDDCEE;
+    margin-inline: calc(50% - 50vw);
+    padding: 24px 20px 40px;
+    width: 100vw;
+    box-sizing: border-box;
+}
+
+/* 搜索框 */
+.sp-search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    max-width: 600px;
+}
+.sp-search-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
+    font-size: 15px;
+    outline: none;
+    background: rgba(255,255,255,0.8);
+}
+.sp-search-input:focus { border-color: #4338CA; }
+.sp-search-btn {
+    background: #4338CA;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+/* 主布局：左 1fr 主内容 + 右 380px AI */
+.sp-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* 卡片：半透明白色 + 毛玻璃 */
+.sp-card {
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 8px 32px rgba(30,41,59,0.12);
+}
+
+/* 左侧主内容卡片 */
+.sp-main { min-width: 0; }
+
+/* 单词头部：星星 + 大单词 + 音标 + 标签 */
+.sp-word-head {
+    margin-bottom: 28px;
+    position: relative;
+}
+/* 星星按钮：右上角空心星，active 时实心黄星 */
+.sp-star-btn {
+    position: absolute;
+    top: 8px; right: 0;
+    background: none; border: none;
+    font-size: 28px; cursor: pointer;
+    color: #94A3B8;
+    transition: all .2s;
+    line-height: 1;
+    padding: 0;
+}
+.sp-star-btn:hover, .sp-star-btn.active { color: #FBBF24; }
+
+/* 超大单词 */
+.sp-word {
+    font-size: 64px;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -1px;
+    line-height: 1.1;
+}
+
+/* 音标行：音标 + 圆形发音按钮 */
+.sp-phonetic-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 12px;
+    font-size: 18px;
+    color: #475569;
+}
+.sp-phonetic { }
+.sp-speak-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(67,56,202,0.1);
+    border: none;
+    color: #4338CA;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+}
+.sp-speak-btn:hover { background: rgba(67,56,202,0.2); }
+
+/* 标签行 */
+.sp-tags { margin-top: 16px; }
+.sp-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+    background: rgba(255,255,255,0.7);
+    color: #475569;
+}
+.sp-tag-star {
+    background: rgba(245,158,11,0.15);
+    color: #B45309;
+}
+
+/* 释义区 */
+.sp-meaning { margin-bottom: 28px; }
+.sp-meaning-line { margin-bottom: 6px; }
+.sp-pos {
+    color: #4338CA;
+    font-style: italic;
+    margin-right: 8px;
+    font-size: 18px;
+}
+.sp-cn {
+    font-size: 22px;
+    color: #0F172A;
+    line-height: 1.6;
+}
+.sp-en {
+    font-size: 15px;
+    color: #64748B;
+    margin-top: 6px;
+}
+
+/* 例句卡片 */
+.sp-sentence-card {
+    background: rgba(67,56,202,0.06);
+    border: 1px solid rgba(67,56,202,0.12);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+}
+.sp-sentence-en {
+    font-size: 16px;
+    color: #1E293B;
+    line-height: 1.6;
+    cursor: pointer;
+}
+
+/* Tabs */
+.sp-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    margin: 24px 0 16px;
+    overflow-x: auto;
+}
+.sp-tab {
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    color: #64748B;
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all .2s;
+    white-space: nowrap;
+}
+.sp-tab.active {
+    color: #4338CA;
+    border-bottom-color: #4338CA;
+}
+.sp-tab-panel { display: none; padding: 12px 0; }
+.sp-tab-panel.active { display: block; }
+.sp-tab-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    font-size: 15px;
+    color: #334155;
+}
+.sp-tab-item:last-child { border-bottom: none; }
+.sp-empty {
+    color: #94A3B8;
+    font-size: 14px;
+    padding: 20px 0;
+    text-align: center;
+}
+
+/* 笔记相关 */
+.sp-note-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.sp-note-time {
+    font-size: 12px;
+    color: #94A3B8;
+}
+.sp-note-content {
+    margin: 4px 0;
+    font-size: 15px;
+    color: #334155;
+}
+.sp-note-input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+.sp-note-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    font-size: 14px;
+    resize: vertical;
+    font-family: inherit;
+    background: rgba(255,255,255,0.8);
+}
+.sp-btn-small {
+    background: #4338CA;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    align-self: flex-start;
+}
+.sp-saved-examples { margin-top: 20px; }
+.sp-saved-title {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 8px;
+}
+.sp-saved-example-item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.sp-example-source {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    background: #eef1f5;
+    color: #555;
+}
+.sp-saved-example-text {
+    margin: 4px 0;
+    font-size: 14px;
+    color: #334155;
+}
+
+/* 右侧 AI 卡片 */
+.sp-ai {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+    position: sticky;
+    top: 24px;
+}
+.sp-ai-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #0F172A;
+}
+.sp-ai-history {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+    max-height: 400px;
+}
+.sp-msg {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+.sp-msg-user {
+    background: rgba(67,56,202,0.1);
+    color: #4338CA;
+    align-self: flex-end;
+    max-width: 80%;
+}
+.sp-msg-ai {
+    background: rgba(255,255,255,0.7);
+    align-self: flex-start;
+    max-width: 85%;
+    color: #1E293B;
+}
+.sp-ai-input {
+    display: flex;
+    gap: 8px;
+}
+.sp-ai-input-field {
+    flex: 1;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #1E293B;
+    font-size: 14px;
+    outline: none;
+}
+.sp-ai-input-field:focus { border-color: #4338CA; }
+.sp-ai-send-btn {
+    background: rgba(67,56,202,0.12);
+    color: #4338CA;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* 底部"下一词"按钮：纯文字 + 小绿条 */
+.sp-bottom-bar {
+    text-align: center;
+    margin-top: 40px;
+    padding-bottom: 20px;
+}
+.sp-next-btn {
+    background: none;
+    border: none;
+    color: #334155;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 16px;
+    position: relative;
+}
+.sp-next-btn::after {
+    content: '';
+    display: block;
+    width: 16px; height: 3px;
+    background: #10B981;
+    border-radius: 2px;
+    margin: 6px auto 0;
+}
+
+/* 移动端适配：< 900px 单列，AI 卡片挪到最下面 */
+@media (max-width: 900px) {
+    .search-page { padding: 16px 12px; margin: 0 -12px; }
+    .sp-layout {
+        grid-template-columns: 1fr;
+    }
+    .sp-ai {
+        height: auto;
+        position: static;
+        max-height: 500px;
+    }
+    .sp-word { font-size: 44px; }
+    .sp-card { padding: 20px; }
+    .sp-cn { font-size: 18px; }
 }

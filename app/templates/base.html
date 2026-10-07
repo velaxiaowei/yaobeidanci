@@ -7,19 +7,20 @@
     {# 手机适配的关键一行：页面宽度跟随设备宽度，初始缩放 1.0。
        以后手机浏览器复习界面正常显示，全靠它。 #}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}我的背单词{% endblock %}</title>
+    <title>{% block title %}要背单词{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <nav class="navbar">
-        <a class="brand" href="{{ url_for('index') }}">我的背单词</a>
+        <a class="brand" href="{{ url_for('index') }}">要背单词</a>
         <div class="nav-links">
             {# 复习模块还没做，暂时指向占位页 #}
             <a href="{{ url_for('review.index') }}">复习</a>
-            {# 生词本列表页 + 查词页 + 例句库 #}
+            {# 生词本列表页 + 查词页 + 例句库 + 笔记库 #}
             <a href="{{ url_for('words.index') }}">生词本</a>
             <a href="{{ url_for('words.search') }}">查词</a>
             <a href="{{ url_for('words.examples') }}">例句库</a>
+            <a href="{{ url_for('words.notes') }}">笔记库</a>
             {# 根据 g.user 判断登录状态，显示不同按钮 #}
             {% if g.user %}
                 <span class="nav-username">{{ g.user['username'] }}</span>
